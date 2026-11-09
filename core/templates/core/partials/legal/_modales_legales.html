@@ -1,0 +1,343 @@
+<!-- ========================================================= -->
+<!-- MODAL 1: DETALLE PROFUNDO DE UN ESTUDIO JURÍDICO          -->
+<!-- ========================================================= -->
+<div class="modal fade" id="modalDetalleEstudio" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header bg-dark text-white py-2">
+                <h5 class="modal-title fw-bold" id="tituloModalEstudio">🏛️ Detalle del Estudio Jurídico</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row g-2 mb-3 text-center">
+                    <div class="col-md-2">
+                        <div class="p-2 border rounded bg-light">
+                            <small class="text-muted d-block">Total Causas</small>
+                            <strong class="fs-5" id="detEstTotal">0</strong>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="p-2 border rounded bg-light">
+                            <small class="text-muted d-block">Winrate General</small>
+                            <strong class="fs-5 text-success" id="detEstWinrate">0%</strong>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="p-2 border rounded bg-light">
+                            <small class="text-muted d-block">Provisión CLP</small>
+                            <strong class="fs-6 text-primary" id="detEstClp">$0</strong>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="p-2 border rounded bg-light">
+                            <small class="text-muted d-block">Provisión UF</small>
+                            <strong class="fs-6" id="detEstUf">0 UF</strong>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="p-2 border rounded bg-light">
+                            <small class="text-muted d-block">Prom. Gestión</small>
+                            <strong class="fs-6" id="detEstDias">0 días</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="table-responsive" style="max-height: 55vh;">
+                    <table class="table table-sm table-striped table-bordered align-middle small">
+                        <thead class="table-dark sticky-top">
+                            <tr>
+                                <th>ID</th>
+                                <th>Siniestro</th>
+                                <th>Competencia</th>
+                                <th>Rotulado</th>
+                                <th>Tribunal</th>
+                                <th>Estado</th>
+                                <th>Sentencia</th>
+                                <th>Provisión</th>
+                                <th>Días Háb.</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbodyDetalleEstudio"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================================= -->
+<!-- MODAL 2: CREAR / EDITAR CAUSA LEGAL + SELECT SENTENCIA    -->
+<!-- ========================================================= -->
+<div class="modal fade" id="modalCausaLegal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <form method="POST" id="formCausaLegal" class="modal-content">
+            {% csrf_token %}
+            <input type="hidden" name="accion" id="inputAccionLegal" value="crear_causa_legal">
+            <input type="hidden" name="fila_excel" id="inputFilaLegal" value="">
+
+            <div class="modal-header bg-dark text-white py-2">
+                <h5 class="modal-title fw-bold" id="tituloModalCausaLegal">➕ Nueva Causa Legal</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+                <div class="row g-2">
+                    <div class="col-md-3">
+                        <label class="form-label small fw-bold mb-1">N° Siniestro (o "NO")</label>
+                        <input type="text" name="siniestro" id="leg_siniestro" class="form-control form-control-sm" required>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small fw-bold mb-1">Competencia (Área)</label>
+                        <select name="competencia" id="leg_competencia" class="form-select form-select-sm">
+                            {% for comp in competencias_legal %}
+                                <option value="{{ comp }}">{{ comp }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-bold mb-1">Estudio Jurídico</label>
+                        <select name="estudio" id="leg_estudio" class="form-select form-select-sm">
+                            {% for est in estudios_catalogo %}
+                                <option value="{{ est }}">{{ est }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label small fw-bold mb-1">Rotulado / Carátula</label>
+                        <input type="text" name="rotulado" id="leg_rotulado" class="form-control form-control-sm">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-bold mb-1">Nombre Asegurado</label>
+                        <input type="text" name="asegurado" id="leg_asegurado" class="form-control form-control-sm">
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label small fw-bold mb-1">Fecha Creación</label>
+                        <input type="date" name="fecha_creacion" id="leg_fcreacion" class="form-control form-control-sm">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small fw-bold mb-1">Fecha Ingreso PJUD</label>
+                        <input type="date" name="fecha_pjud" id="leg_fpjud" class="form-control form-control-sm">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small fw-bold mb-1">Fecha Asignación</label>
+                        <input type="date" name="fecha_asig" id="leg_fasig" class="form-control form-control-sm">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small fw-bold mb-1">Fecha Término</label>
+                        <input type="date" name="fecha_termino" id="leg_ftermino" class="form-control form-control-sm">
+                    </div>
+
+                    <div class="col-md-2">
+                        <label class="form-label small fw-bold mb-1">Moneda Prov.</label>
+                        <select name="moneda" id="leg_moneda" class="form-select form-select-sm">
+                            <option value="">Sin moneda</option>
+                            <option value="CLP">CLP ($)</option>
+                            <option value="UF">UF</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small fw-bold mb-1">Provisión Recomendada</label>
+                        <input type="number" step="any" name="provision" id="leg_provision" class="form-control form-control-sm">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small fw-bold mb-1">Calificación</label>
+                        <select name="calificacion" id="leg_calificacion" class="form-select form-select-sm">
+                            {% for cal in calificaciones_legal %}
+                                <option value="{{ cal }}">{{ cal }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small fw-bold mb-1">Motivo - Delito</label>
+                        <input type="text" name="motivo_delito" id="leg_motivo" class="form-control form-control-sm" list="dlMotivosLegal">
+                        <datalist id="dlMotivosLegal">
+                            {% for m in motivos_legal %}<option value="{{ m }}">{% endfor %}
+                        </datalist>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label small fw-bold mb-1">Parte</label>
+                        <select name="parte" id="leg_parte" class="form-select form-select-sm">
+                            {% for p in partes_legal %}
+                                <option value="{{ p }}">{{ p }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small fw-bold mb-1">Estado Causa</label>
+                        <select name="estado" id="leg_estado" class="form-select form-select-sm">
+                            {% for e in estados_legal %}
+                                <option value="{{ e }}">{{ e }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small fw-bold mb-1">Sentencia (Winrate)</label>
+                        <select name="sentencia" id="leg_sentencia" class="form-select form-select-sm">
+                            <option value="">-- Sin Sentencia (En tramitación) --</option>
+                            <optgroup label="A Favor">
+                                <option value="A FAVOR">A FAVOR</option>
+                                <option value="A FAVOR/INCOMPETENCIA">A FAVOR/INCOMPETENCIA</option>
+                                <option value="A FAVOR/ABANDONO">A FAVOR/ABANDONO</option>
+                                <option value="A FAVOR/EXCEPCION DILATORIA">A FAVOR/EXCEPCION DILATORIA</option>
+                                <option value="SENTENCIA CONDENATORIA">SENTENCIA CONDENATORIA</option>
+                                <option value="ACUERDO">ACUERDO</option>
+                                <option value="INCOMPETENCIA/ACUERDO">INCOMPETENCIA/ACUERDO</option>
+                                <option value="AR">AR (Acuerdo Reparatorio)</option>
+                                <option value="SCP">SCP (Suspensión Condicional)</option>
+                            </optgroup>
+                            <optgroup label="En Contra ">
+                                <option value="DNP">DNP (Decisión de No Perseverar)</option>
+                                <option value="Sobreseimiento definitivo">Sobreseimiento definitivo</option>
+                                <option value="EN CONTRA">EN CONTRA</option>
+                            </optgroup>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small fw-bold mb-1">Etapa Procesal</label>
+                        <input type="text" name="etapa_procesal" id="leg_etapa" class="form-control form-control-sm">
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="form-label small fw-bold mb-1">Tribunal</label>
+                        <input type="text" name="tribunal" id="leg_tribunal" class="form-control form-control-sm">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small fw-bold mb-1">RIT Tribunal</label>
+                        <input type="text" name="rit" id="leg_rit" class="form-control form-control-sm">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small fw-bold mb-1">RUC Fiscalía</label>
+                        <input type="text" name="ruc" id="leg_ruc" class="form-control form-control-sm">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label small fw-bold mb-1">Analista FID</label>
+                        <input type="text" name="analista" id="leg_analista" class="form-control form-control-sm">
+                    </div>
+
+                    <div class="col-12 mt-2">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label class="form-label small fw-bold mb-0">Observación / Bitácora de la Causa (Columna AD)</label>
+                            <div class="col-12 mt-2">
+                        <label class="form-label small fw-bold mb-1">Observación / Bitácora de la Causa (Columna AD)</label>
+                        <textarea name="observacion" id="leg_observacion" rows="3" class="form-control form-control-sm"></textarea>
+                    </div>
+                        </div>
+                        <textarea name="observacion" id="leg_observacion" rows="3" class="form-control form-control-sm"
+                                  oninput="sincronizarCheckHallazgo()"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer py-2">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" class="btn btn-primary btn-sm fw-bold">💾 Guardar en Vivo en Excel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ========================================================= -->
+<!-- MODAL 3: REGISTRAR RECEPCIÓN EN 'Informes recibidos'      -->
+<!-- ========================================================= -->
+<div class="modal fade" id="modalRegistrarInforme" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <form method="POST" class="modal-content">
+            {% csrf_token %}
+            <input type="hidden" name="accion" value="registrar_informe_estudio">
+            <div class="modal-header bg-dark text-white py-2">
+                <h6 class="modal-title fw-bold">📩 Registrar Recepción de Informe de Estudio</h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row g-2">
+                    <div class="col-md-6">
+                        <label class="form-label small fw-bold mb-1">Fecha de Recepción</label>
+                        <input type="date" name="fecha_recepcion" class="form-control form-control-sm" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-bold mb-1">Período que Informa</label>
+                        <input type="text" name="periodo_informa" class="form-control form-control-sm"
+                               value="Octubre 2026" placeholder="Ej: Diciembre 2026" required>
+                    </div>
+                    <div class="col-md-8">
+                        <label class="form-label small fw-bold mb-1">Estudio Jurídico</label>
+                        <select name="estudio" class="form-select form-select-sm" required>
+                            {% for est in estudios_catalogo %}
+                                <option value="{{ est }}">{{ est }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small fw-bold mb-1">Área Informada</label>
+                        <select name="area_informada" class="form-select form-select-sm">
+                            <option value="Todas">Todas</option>
+                            <option value="Civil">Civil</option>
+                            <option value="Penal">Penal</option>
+                            <option value="Recupero">Recupero</option>
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label small fw-bold mb-1">Recibido de (Contacto)</label>
+                        <input type="text" name="recibido_de" class="form-control form-control-sm">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label small fw-bold mb-1">Observaciones de la Entrega</label>
+                        <textarea name="observaciones_informe" rows="2" class="form-control form-control-sm"></textarea>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer py-2">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" class="btn btn-primary btn-sm fw-bold">💾 Guardar en Informes Recibidos</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ========================================================= -->
+<!-- MODAL 4: EDITAR BITÁCORA BIMESTRAL EN 'Reportes estudios' -->
+<!-- ========================================================= -->
+<div class="modal fade" id="modalReporteBimestral" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <form method="POST" class="modal-content">
+            {% csrf_token %}
+            <input type="hidden" name="accion" value="guardar_reporte_bimestral">
+            <input type="hidden" name="fila_reporte" id="rep_fila_input">
+            <div class="modal-header bg-dark text-white py-2">
+                <h6 class="modal-title fw-bold" id="tituloModalReporteBimestral">📝 Reportes Bimestrales de la Causa</h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row g-2">
+                    <div class="col-12">
+                        <label class="form-label small fw-bold mb-1">Reportes anteriores (hasta sep-2026)</label>
+                        <textarea name="rep_anteriores" id="rep_anteriores" rows="2" class="form-control form-control-sm"></textarea>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-bold mb-1 text-primary">Octubre 2026</label>
+                        <textarea name="oct_2026" id="rep_oct_2026" rows="3" class="form-control form-control-sm"></textarea>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-bold mb-1 text-primary">Diciembre 2026</label>
+                        <textarea name="dic_2026" id="rep_dic_2026" rows="3" class="form-control form-control-sm"></textarea>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-bold mb-1">Febrero 2027</label>
+                        <textarea name="feb_2027" id="rep_feb_2027" rows="2" class="form-control form-control-sm"></textarea>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-bold mb-1">Abril 2027</label>
+                        <textarea name="abr_2027" id="rep_abr_2027" rows="2" class="form-control form-control-sm"></textarea>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer py-2">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" class="btn btn-primary btn-sm fw-bold">💾 Guardar en Reportes Estudios</button>
+            </div>
+        </form>
+    </div>
+</div>

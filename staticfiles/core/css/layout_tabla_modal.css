@@ -1,0 +1,195 @@
+/* core/static/core/css/2_layout_tabla_modal.css */
+
+/* 1. Dimensiones y espaciado de la tabla principal */
+.contenedor-tabla-consolidado {
+    max-height: 78vh;
+    min-height: 680px;
+}
+
+#tablaConsolidado td,
+#tablaConsolidado th {
+    padding-top: 0.35rem;
+    padding-bottom: 0.35rem;
+}
+
+/* 2. Control de capas (z-index) para que los menús no queden detrás del encabezado */
+#tablaConsolidado thead.sticky-top {
+    z-index: 10;
+}
+
+.card-header .dropdown-menu {
+    z-index: 1050;
+}
+
+/* 3. Ajuste estructural del Modal Crear / Editar al 100% de zoom */
+#modalRegistro .modal-dialog {
+    max-width: 960px;
+    margin: 2vh auto;
+}
+
+#modalRegistro .modal-content {
+    max-height: 92vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+#modalRegistro .modal-header,
+#modalRegistro .modal-footer {
+    flex-shrink: 0;
+}
+
+#modalRegistro .modal-body {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    zoom: 0.92;
+}
+
+/* Galería de Archivos Subidos (Tarjetas cuadradas redondeadas) */
+.galeria-archivos-subidos {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    align-items: stretch;
+}
+
+.posicion-relativa {
+    position: relative;
+}
+
+.tarjeta-archivo-item {
+    width: 155px;
+    height: 145px;
+    background-color: #FFFFFF;
+    border: 2.5px solid #1E2229;
+    border-radius: 22px;
+    padding: 14px 10px 10px 10px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.18s ease;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+}
+
+.tarjeta-archivo-item:hover {
+    transform: translateY(-3px);
+    border-color: #D7002A;
+    box-shadow: 0 6px 14px rgba(215, 0, 42, 0.15);
+}
+
+.tarjeta-archivo-item.activo {
+    border-color: #D7002A;
+    background-color: #FCE8EC;
+    box-shadow: 0 4px 12px rgba(215, 0, 42, 0.22);
+}
+
+.tarjeta-archivo-icono {
+    font-size: 2rem;
+    line-height: 1.1;
+    margin-top: 4px;
+}
+
+.tarjeta-archivo-nombre {
+    font-size: 0.76rem;
+    font-weight: 700;
+    color: #1E2229;
+    width: 100%;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    word-break: break-word;
+    line-height: 1.2;
+}
+
+.form-quitar-archivo {
+    position: absolute;
+    top: 6px;
+    right: 8px;
+    margin: 0;
+}
+
+.btn-quitar-tarjeta {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(30, 34, 41, 0.12);
+    color: #1E2229;
+    font-weight: bold;
+    font-size: 14px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.btn-quitar-tarjeta:hover {
+    background: #D7002A;
+    color: #FFFFFF;
+}
+
+/* Grilla exacta de 7 columnas para el Calendario Judicial */
+.calendario-grid-7 {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 6px;
+}
+
+.celda-dia-calendario {
+    min-height: 92px;
+    background-color: #FFFFFF;
+    border: 1.5px solid #E2E8F0;
+    border-radius: 10px;
+    padding: 6px;
+    display: flex;
+    flex-direction: column;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.celda-dia-calendario.fuera-de-mes {
+    background-color: #F8FAFC;
+    opacity: 0.45;
+}
+
+/* Día actual marcado en rojo */
+.celda-dia-calendario.dia-actual-rojo {
+    border: 2px solid #D7002A;
+    background-color: #FFF5F7;
+    box-shadow: 0 0 0 2px rgba(215, 0, 42, 0.12);
+}
+
+.celda-dia-calendario.dia-actual-rojo .numero-dia-cal {
+    background-color: #D7002A;
+    color: #FFFFFF !important;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.evento-causa-pill {
+    cursor: pointer;
+    font-size: 0.74rem;
+    font-weight: 700;
+    padding: 4px 8px;
+    border-radius: 6px;
+    background-color: #D7002A;
+    color: #FFFFFF;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: transform 0.12s ease, background-color 0.12s ease;
+}
+
+.evento-causa-pill:hover {
+    background-color: #A20620;
+    transform: translateY(-1px);
+}

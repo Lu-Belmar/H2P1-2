@@ -1,0 +1,170 @@
+<!-- core/templates/core/partials/_modal_registro.html -->
+
+<div class="modal fade" id="modalRegistro" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content shadow">
+            <div class="modal-header bg-dark text-white py-2">
+                <h6 class="modal-title fw-bold mb-0" id="tituloModal">Nuevo Registro - Tabla consolidado</h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body py-2 px-3">
+                <form method="POST" id="formRegistro">
+                    {% csrf_token %}
+                    <input type="hidden" name="accion" id="inputAccion" value="crear_registro">
+                    <input type="hidden" name="fila_excel" id="inputFilaExcel" value="">
+
+                    <div class="small fw-bold text-primary border-bottom pb-1 mb-2">1. Datos de Identificación del Caso</div>
+                    <div class="row g-2 mb-2">
+                        <div class="col-md-5">
+                            <label class="form-label small fw-semibold mb-1">Nombre Asegurado / Reclamante *</label>
+                            <input type="text" name="nombre" id="f_nombre" class="form-control form-control-sm" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small fw-semibold mb-1">N° OFICIO *</label>
+                            <input type="number" name="n_oficio" id="f_oficio" class="form-control form-control-sm" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-semibold mb-1">N° de Siniestro *</label>
+                            <input type="text" name="n_siniestro" id="f_siniestro" class="form-control form-control-sm" required>
+                        </div>
+                    </div>
+
+                    <div class="small fw-bold text-primary border-bottom pb-1 mb-2">
+                        2. Fechas y Columnas Autocalculadas (Fórmulas del XLSX)
+                    </div>
+                    <div class="row g-2 mb-2">
+                        <div class="col-md-3">
+                            <label class="form-label small fw-semibold mb-1">Fecha Siniestro (Col D)</label>
+                            <input type="date" name="fecha_siniestro" id="f_fsiniestro" class="form-control form-control-sm">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small fw-semibold mb-1">Fecha CMF (Col E) *</label>
+                            <input type="date" name="fecha_cmf" id="f_fcmf" class="form-control form-control-sm" onchange="recalcularFormulasModal()" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small fw-semibold mb-1">Fecha Límite Respuesta (Col H)</label>
+                            <input type="date" name="fecha_limite" id="f_flimite" class="form-control form-control-sm" onchange="recalcularFormulasModal()">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small fw-semibold mb-1">Fecha Respuesta FID (Col I)</label>
+                            <input type="date" name="fecha_fid" id="f_ffid" class="form-control form-control-sm" onchange="recalcularFormulasModal()">
+                        </div>
+                    </div>
+
+                    <div class="alert alert-secondary py-1 px-2 mb-2">
+                        <div class="row g-1 text-center" style="font-size: 0.75rem;">
+                            <div class="col-6 col-md-2">
+                                <div class="bg-white border rounded py-1">
+                                    <span class="text-muted d-block">Mes/Año CMF (F,G)</span>
+                                    <strong id="calc_cmf">-</strong>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-2">
+                                <div class="bg-white border rounded py-1">
+                                    <span class="text-muted d-block">Mes/Año FID (J,K)</span>
+                                    <strong id="calc_fid">-</strong>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-2">
+                                <div class="bg-white border rounded py-1">
+                                    <span class="text-muted d-block">CMF vs FID (Col L)</span>
+                                    <strong id="calc_l">-</strong>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-2">
+                                <div class="bg-white border rounded py-1">
+                                    <span class="text-muted d-block">Demora Días (Col M)</span>
+                                    <strong id="calc_m">-</strong>
+                                </div>
+                            </div>
+                            <div class="col-12 col-md-4">
+                                <div class="bg-white border rounded py-1">
+                                    <span class="text-muted d-block">Rango de Demora (Col N)</span>
+                                    <strong id="calc_n">-</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="small fw-bold text-primary border-bottom pb-1 mb-2">3. Clasificación, Respuesta y Seguimiento</div>
+                    <div class="row g-2">
+                        <div class="col-md-5">
+                            <label class="form-label small fw-semibold mb-1">Motivos del Reclamo (Col O)</label>
+                            <select name="motivo" id="f_motivo" class="form-select form-select-sm">
+                                <option value="">-- Seleccionar motivo --</option>
+                                {% for m in motivos_catalogo %}
+                                    <option value="{{ m }}">{{ m }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-semibold mb-1">Estado/Calidad de la Respuesta (Col Q)</label>
+                            <select name="estado" id="f_estado" class="form-select form-select-sm">
+                                <option value="">-- Seleccionar estado --</option>
+                                {% for est in estados_catalogo %}
+                                    <option value="{{ est }}">{{ est }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small fw-semibold mb-1">Ramo (Col R)</label>
+                            <select name="ramo" id="f_ramo" class="form-select form-select-sm">
+                                {% for rm in ramos_catalogo %}
+                                    <option value="{{ rm }}">{{ rm }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label small fw-semibold mb-1">Respuesta (Col P)</label>
+                            <textarea name="respuesta" id="f_respuesta" rows="2" class="form-control form-control-sm"></textarea>
+                        </div>
+
+                        <div class="col-md-3">
+                            <label class="form-label small fw-semibold mb-1">DDA (Col S)</label>
+                            <input type="text" name="dda" id="f_dda" class="form-control form-control-sm">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small fw-semibold mb-1">ZENDESK (Col T)</label>
+                            <input type="text" name="zendesk" id="f_zendesk" class="form-control form-control-sm">
+                        </div>
+
+                        <div class="col-md-3">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <label class="form-label small fw-semibold mb-0">Observaciones (Col U)</label>
+                                <div class="form-check form-switch mb-0">
+                                    <input class="form-check-input" type="checkbox" id="f_check_anomalia"
+                                           name="marcar_anomalia" onchange="toggleAnomaliaInput()">
+                                    <label class="form-check-label small fw-bold text-danger" for="f_check_anomalia">
+                                         Anomalía
+                                    </label>
+                                </div>
+                            </div>
+                            <input type="text" name="observaciones" id="f_observaciones"
+                                   class="form-control form-control-sm"
+                                   placeholder="Detalle u observación..."
+                                   oninput="sincronizarCheckDesdeTexto()">
+                        </div>
+
+                        <div class="col-md-3">
+                            <label class="form-label small fw-semibold mb-1">LEGAL (Col Y)</label>
+                            <select name="legal" id="f_legal" class="form-select form-select-sm">
+                                {% for lg in legal_catalogo %}
+                                    <option value="{{ lg }}">{{ lg|default:"-- Ninguno --" }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <div class="modal-footer bg-light py-2">
+                <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" form="formRegistro" class="btn btn-sm btn-primary fw-bold">
+                    Guardar en Excel
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

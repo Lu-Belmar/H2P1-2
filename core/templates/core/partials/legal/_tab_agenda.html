@@ -1,0 +1,205 @@
+<!-- core/templates/core/partials/legal/_tab_agenda.html -->
+
+<div class="row g-4">
+    <!-- Columna Izquierda: Calendario Judicial Mensual -->
+    <div class="col-lg-8">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center py-3">
+                <div class="d-flex align-items-center gap-3">
+                    <h4 class="fw-bold mb-0 text-white" id="labelMesAnioCalendario">Noviembre 2026</h4>
+                    <div class="btn-group btn-group-sm">
+                        <button type="button" class="btn btn-outline-light px-2 fw-bold" onclick="cambiarMesCalendario(-1)" title="Mes anterior">‹</button>
+                        <button type="button" class="btn btn-outline-light px-2 fw-bold" onclick="cambiarMesCalendario(1)" title="Mes siguiente">›</button>
+                    </div>
+                </div>
+                <div class="d-flex align-items-center gap-3 small text-white-50">
+                    <span><i class="badge bg-danger rounded-pill me-1">&nbsp;</i> Audiencia</span>
+                    <span><i class="badge border border-danger text-danger rounded-pill me-1">&nbsp;</i> Día actual</span>
+                </div>
+            </div>
+
+            <div class="card-body p-3 bg-light">
+                <!-- Encabezados de días de la semana -->
+                <div class="calendario-grid-7 text-center fw-bold text-secondary small py-2 mb-2 bg-white border rounded">
+                    <div>LUN</div>
+                    <div>MAR</div>
+                    <div>MIÉ</div>
+                    <div>JUE</div>
+                    <div>VIE</div>
+                    <div>SÁB</div>
+                    <div>DOM</div>
+                </div>
+
+                <!-- Grilla Dinámica de 7 Columnas Fijas -->
+                <div id="grillaCalendarioMensual" class="calendario-grid-7">
+                    <!-- Rellenado por JavaScript -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Columna Derecha: Listado de Próximas Audiencias -->
+    <div class="col-lg-4">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center py-3">
+                <h5 class="fw-bold mb-0">📅 Próximas Audiencias</h5>
+                <button type="button" class="btn btn-sm btn-primary fw-bold"
+                        data-bs-toggle="modal" data-bs-target="#modalAgregarAudiencia">
+                    + Agregar
+                </button>
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush overflow-y-auto" style="max-height: 600px;" id="listaProximasAudienciasLateral">
+                    {% for aud in audiencias_list %}
+                    <div class="list-group-item list-group-item-action p-3 border-bottom"
+                         style="cursor: pointer;"
+                         onclick="abrirOverviewCausaAgenda('{{ aud.id_causa|default:aud.siniestro|escapejs }}', '{{ aud.fecha_audiencia_iso|escapejs }}')">
+                        <div class="d-flex justify-content-between align-items-start mb-1">
+                            <span class="badge bg-danger-subtle text-danger border border-danger small">
+                                {{ aud.id_causa|default:aud.siniestro|default:"Sin ID" }}
+                            </span>
+                            <small class="text-muted fw-semibold">{{ aud.fecha_audiencia }}</small>
+                        </div>
+                        <h6 class="fw-bold mb-1 text-dark small">{{ aud.motivo_audiencia }}</h6>
+                        <small class="text-secondary d-block">
+                            Estudio: <strong>{{ aud.estudio|default:"-" }}</strong>
+                        </small>
+                    </div>
+                    {% empty %}
+                    <div class="text-center py-4 text-muted">No hay audiencias registradas.</div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL 1: OVERVIEW DE LA CAUSA Y LA AUDIENCIA AL HACER CLIC -->
+<div class="modal fade" id="modalOverviewCausaAgenda" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-dark text-white py-2">
+                <h5 class="modal-title fw-bold" id="ov_titulo_modal">⚖️ Resumen de la Causa</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Bloque destacado de la audiencia seleccionada -->
+                <div class="alert alert-danger border-danger mb-3 py-2">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <strong class="text-uppercase small">📅 Detalle de la Audiencia Agendada</strong>
+                        <span class="badge bg-danger" id="ov_fecha_audiencia">-</span>
+                    </div>
+                    <div class="fw-bold mt-1" id="ov_motivo_audiencia">-</div>
+                </div>
+
+                <!-- Ficha General de la Causa -->
+                <div class="row g-3 small">
+                    <div class="col-md-4">
+                        <span class="text-muted d-block">ID Causa / Siniestro</span>
+                        <strong class="fs-6 text-dark" id="ov_id_siniestro">-</strong>
+                    </div>
+                    <div class="col-md-4">
+                        <span class="text-muted d-block">Competencia / Estado</span>
+                        <strong class="fs-6" id="ov_competencia_estado">-</strong>
+                    </div>
+                    <div class="col-md-4">
+                        <span class="text-muted d-block">Provisión Recomendada</span>
+                        <strong class="fs-6 text-primary" id="ov_provision">-</strong>
+                    </div>
+
+                    <div class="col-md-6">
+                        <span class="text-muted d-block">Rotulado / Carátula</span>
+                        <strong class="text-dark" id="ov_rotulado">-</strong>
+                    </div>
+                    <div class="col-md-6">
+                        <span class="text-muted d-block">Asegurado</span>
+                        <strong class="text-dark" id="ov_asegurado">-</strong>
+                    </div>
+
+                    <div class="col-md-6">
+                        <span class="text-muted d-block">Estudio Jurídico</span>
+                        <strong class="text-dark" id="ov_estudio">-</strong>
+                    </div>
+                    <div class="col-md-6">
+                        <span class="text-muted d-block">Tribunal (RIT / RUC)</span>
+                        <strong class="text-dark" id="ov_tribunal_roles">-</strong>
+                    </div>
+
+                    <div class="col-md-6">
+                        <span class="text-muted d-block">Motivo / Delito</span>
+                        <strong class="text-dark" id="ov_motivo_delito">-</strong>
+                    </div>
+                    <div class="col-md-6">
+                        <span class="text-muted d-block">Etapa Procesal / Sentencia</span>
+                        <strong class="text-dark" id="ov_etapa_sentencia">-</strong>
+                    </div>
+
+                    <div class="col-12">
+                        <span class="text-muted d-block mb-1">Última Observación / Bitácora Registrada</span>
+                        <div class="p-2 border rounded bg-light text-dark" style="max-height: 130px; overflow-y: auto;" id="ov_observacion">
+                            -
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer py-2 bg-light">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL 2: AGREGAR NUEVA AUDIENCIA O PLAZO -->
+<div class="modal fade" id="modalAgregarAudiencia" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <form method="POST" class="modal-content">
+            {% csrf_token %}
+            <input type="hidden" name="accion" value="registrar_audiencia_agenda">
+            <div class="modal-header bg-dark text-white py-2">
+                <h5 class="modal-title fw-bold">📅 Agendar Audiencia o Plazo Judicial</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row g-2">
+                    <div class="col-md-6">
+                        <label class="form-label small fw-bold mb-1">Fecha de la Audiencia</label>
+                        <input type="date" name="fecha_audiencia" class="form-control form-control-sm" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-bold mb-1">N° Siniestro</label>
+                        <input type="text" name="siniestro" class="form-control form-control-sm">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-bold mb-1">ID Causa (Ej. 2150005531-1)</label>
+                        <input type="text" name="id_causa" class="form-control form-control-sm">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-bold mb-1">Estudio Jurídico</label>
+                        <select name="estudio" class="form-select form-select-sm">
+                            {% for est in estudios_catalogo %}
+                                <option value="{{ est }}">{{ est }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-bold mb-1">RUC Fiscalía</label>
+                        <input type="text" name="ruc" class="form-control form-control-sm">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-bold mb-1">RIT Tribunal</label>
+                        <input type="text" name="rit" class="form-control form-control-sm">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label small fw-bold mb-1">Motivo / Descripción de la Audiencia</label>
+                        <textarea name="motivo_audiencia" rows="3" class="form-control form-control-sm"
+                                  placeholder="Ej: Audiencia para discusión de DNP..." required></textarea>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer py-2">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" class="btn btn-primary btn-sm fw-bold">💾 Agendar en Excel</button>
+            </div>
+        </form>
+    </div>
+</div>

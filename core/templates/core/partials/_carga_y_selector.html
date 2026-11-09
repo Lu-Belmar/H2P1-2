@@ -1,0 +1,131 @@
+<!-- core/templates/core/partials/_carga_y_selector.html -->
+
+<div class="card shadow-sm mb-4">
+    <div class="card-body py-3">
+        <!-- Encabezado y Controles para Añadir Más Archivos -->
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+            <div>
+                <h6 class="fw-extrabold mb-0 text-uppercase tracking-wide">📁 Archivos Subidos</h6>
+                <small class="text-muted">Haz clic en cualquier archivo para activarlo y editarlo en vivo</small>
+            </div>
+
+            <div class="d-flex flex-wrap align-items-center gap-2">
+                <!-- Pegar ruta directa -->
+                <form method="POST" class="d-flex gap-1 m-0">
+                    {% csrf_token %}
+                    <input type="hidden" name="accion" value="vincular_ruta">
+                    <input type="text" name="ruta_directa" class="form-control form-control-sm"
+                           style="width: 280px;"
+                           placeholder="Pegar ruta local o SharePoint...">
+                    <button type="submit" class="btn btn-sm btn-henfid-outline fw-semibold text-nowrap">
+                        🔗 Añadir Ruta
+                    </button>
+                </form>
+
+                <!-- Botón multi-archivo de Windows -->
+                <form method="POST" class="m-0">
+                    {% csrf_token %}
+                    <input type="hidden" name="accion" value="explorar_archivo">
+                    <button type="submit" class="btn btn-sm btn-primary fw-bold">
+                        📂 Subir / Vincular Archivos Excel
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Galería Visual de Tarjetas de Archivos (Estilo Boceto) -->
+        {% if archivos_vinculados %}
+            <div class="galeria-archivos-subidos">
+                {% for item in archivos_vinculados %}
+                    <div class=" posicion-relativa">
+                        <!-- Formulario que se envía con 1 solo clic sobre la tarjeta -->
+                        <form method="POST" class="m-0">
+                            {% csrf_token %}
+                            <input type="hidden" name="accion" value="seleccionar_archivo_galeria">
+                            <input type="hidden" name="ruta_elegida" value="{{ item.ruta }}">
+                            <button type="submit"
+                                    class="tarjeta-archivo-item {% if item.ruta == ruta_archivo %}activo{% endif %}"
+                                    title="{{ item.ruta }}">
+                                <div class="tarjeta-archivo-icono">
+                                    {% if item.tipo == 'LEGAL' %}
+                                        ⚖️
+                                        <span class="badge bg-dark d-block mt-1" style="font-size: 0.65rem;">CAUSAS LEGALES</span>
+                                    {% elif item.tipo == 'CMF' %}
+                                        📋
+                                        <span class="badge bg-primary d-block mt-1" style="font-size: 0.65rem;">OFICIOS CMF</span>
+                                    {% else %}
+                                        📊
+                                        <span class="badge bg-secondary d-block mt-1" style="font-size: 0.65rem;">EXCEL</span>
+                                    {% endif %}
+                                </div>
+                                <div class="tarjeta-archivo-nombre">
+                                    {{ item.nombre }}
+                                </div>
+                            </button>
+                        </form>
+
+                        <!-- Botón pequeño en la esquina para desvincular de la lista -->
+                        <form method="POST" class="form-quitar-archivo">
+                            {% csrf_token %}
+                            <input type="hidden" name="accion" value="quitar_archivo_galeria">
+                            <input type="hidden" name="ruta_quitar" value="{{ item.ruta }}">
+                            <button type="submit" class="btn-quitar-tarjeta" title="Quitar de la lista">×</button>
+                        </form>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="text-center py-4 border rounded-4 bg-light text-muted">
+                No hay archivos vinculados. Haz clic en <strong>📂 Subir / Vincular Archivos Excel</strong> para cargar uno o varios a la vez.
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Barra del Archivo Activo y Selector de Hoja -->
+{% if archivo_cargado %}
+    <div class="card shadow-sm mb-4 border-primary">
+        <div class="card-body py-2 px-3 d-flex flex-wrap align-items-center justify-content-between gap-3">
+            <div>
+                <span class="badge bg-success mb-1">🟢 Editando en vivo</span>
+                <span class="fw-bold ms-1">{{ nombre_archivo }}</span>
+                <small class="text-muted d-block text-truncate" style="max-width: 650px;">{{ ruta_archivo }}</small>
+            </div>
+
+            <div class="d-flex flex-wrap align-items-center gap-2">
+                <form method="POST" class="m-0">
+                    {% csrf_token %}
+                    <input type="hidden" name="accion" value="recargar_en_vivo">
+                    <button type="submit" class="btn btn-sm btn-outline-secondary fw-semibold">
+                        🔄 Recargar datos
+                    </button>
+                </form>
+
+                <form method="POST" class="d-flex align-items-center gap-2 m-0">
+                    {% csrf_token %}
+                    <input type="hidden" name="accion" value="cambiar_hoja">
+                    <label for="selectHoja" class="fw-bold small mb-0 text-nowrap">Hoja activa:</label>
+                    <select id="selectHoja" name="hoja_seleccionada" class="form-select form-select-sm"
+                            onchange="this.form.submit()"
+                            {% if dropdown_disabled %}disabled{% endif %}>
+                        {% for sheet in sheet_names %}
+                            <option value="{{ sheet }}" {% if sheet == hoja_seleccionada %}selected{% endif %}>
+                                {{ sheet }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </form>
+
+                {% if es_hoja_consolidado %}
+                    <button type="button" class="btn btn-sm btn-success fw-bold" onclick="abrirModalCrear()">
+                        ➕ Nuevo Oficio CMF
+                    </button>
+                {% elif es_hoja_causas_legales %}
+                    <button type="button" class="btn btn-sm btn-success fw-bold" onclick="abrirModalCausaCrear()">
+                        ➕ Nueva Causa Legal
+                    </button>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+{% endif %}

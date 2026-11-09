@@ -1,0 +1,97 @@
+<!-- core/templates/core/partials/_tab_graficos.html -->
+
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-dark text-white fw-bold py-2">
+        Configuración del Gráfico
+    </div>
+    <div class="card-body">
+        <div class="row g-3 align-items-end">
+            <!-- COL 1 TIPO DE REPORTE -->
+            <div class="col-md-4">
+                <label class="form-label small fw-bold mb-1">Análisis a visualizar</label>
+                <select id="g_tipo_reporte" class="form-select form-select-sm" onchange="renderizarGraficoAvanzado()">
+                    <option value="motivos">Top 10 Motivos del Reclamo</option>
+                    <option value="evolucion_mensual">Evolución Mensual (Ene - Dic)</option>
+                    <option value="evolucion_anual">Comparativa por Año CMF</option>
+                    <option value="sla_demora">Cumplimiento SLA (Rango de Demora)</option>
+                    <option value="calidad_respuesta">Distribución por Calidad de Respuesta</option>
+                    <option value="promedio_dias">Promedio Días Respuesta (CMF vs FID) por Año</option>
+                </select>
+            </div>
+
+            <!-- COL 2 OFICIOS N SHI (REVISAR) -->
+            <div class="col-md-2">
+                <label class="form-label small fw-bold mb-1">Unidad de medida</label>
+                <select id="g_metrica" class="form-select form-select-sm" onchange="renderizarGraficoAvanzado()">
+                    <option value="filas">Total Registros (Filas)</option>
+                    <option value="oficios">N° Oficios Únicos</option>
+                </select>
+            </div>
+
+            <!-- COL 3 AÑO CMF (REVISAR) -->
+            <div class="col-md-2">
+                <label class="form-label small fw-bold mb-1">Año CMF</label>
+                <select id="g_anio" class="form-select form-select-sm" onchange="renderizarGraficoAvanzado()">
+                    <option value="TODOS">Todos los años</option>
+                    {% for a in anios_disponibles %}
+                        <option value="{{ a }}">{{ a }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- COL 4 CHECKLIST -->
+            <div class="col-md-2">
+                <label class="form-label small fw-bold mb-1">Ramos incluidos</label>
+                <div class="dropdown">
+                    <button class="form-select form-select-sm text-start text-truncate" type="button"
+                            id="btnDropdownRamos" data-bs-toggle="dropdown" data-bs-auto-close="outside"
+                            aria-expanded="false">
+                        Todos seleccionados
+                    </button>
+                    <div class="dropdown-menu p-2 shadow-sm w-100" aria-labelledby="btnDropdownRamos">
+                        {% for rm in ramos_catalogo %}
+                            <div class="form-check mb-1">
+                                <input class="form-check-input check-ramo-grafico" type="checkbox"
+                                       value="{{ rm }}" id="chk_g_ramo_{{ rm }}" checked
+                                       onchange="actualizarFiltroRamosGrafico()">
+                                <label class="form-check-label small fw-semibold w-100" for="chk_g_ramo_{{ rm }}">
+                                    {{ rm }}
+                                </label>
+                            </div>
+                        {% endfor %}
+                        <div class="form-check border-top pt-1 mt-1">
+                            <input class="form-check-input check-ramo-grafico" type="checkbox"
+                                   value="SIN_RAMO" id="chk_g_ramo_sin" checked
+                                   onchange="actualizarFiltroRamosGrafico()">
+                            <label class="form-check-label small text-muted w-100" for="chk_g_ramo_sin">
+                                Sin Ramo
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- COL 5 ANOMALIA -->
+            <div class="col-md-2">
+                <label class="form-label small fw-bold mb-1">Anomalía</label>
+                <select id="g_anomalia" class="form-select form-select-sm" onchange="renderizarGraficoAvanzado()">
+                    <option value="TODOS">Todos</option>
+                    <option value="SI"> Solo Anomalías</option>
+                    <option value="NO"> Sin Anomalía</option>
+                </select>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center py-2">
+        <span class="fw-bold" id="g_titulo_dinamico">Análisis Gráfico</span>
+        <span class="badge bg-primary" id="g_resumen_muestra">0 casos</span>
+    </div>
+    <div class="card-body">
+        <div style="position: relative; height: 420px; width: 100%;">
+            <canvas id="graficoAvanzado"></canvas>
+        </div>
+    </div>
+</div>

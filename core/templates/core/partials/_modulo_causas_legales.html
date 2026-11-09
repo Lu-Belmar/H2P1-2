@@ -1,0 +1,513 @@
+<!-- core/templates/core/partials/_modulo_causas_legales.html -->
+
+<ul class="nav nav-tabs mb-3 fw-bold" id="legalTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="tab-legal-tabla-btn" data-bs-toggle="tab"
+                data-bs-target="#pane-legal-tabla" type="button" role="tab">
+            ⚖️ Gestión de Causas y Provisión
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="tab-legal-estudios-btn" data-bs-toggle="tab"
+                data-bs-target="#pane-legal-estudios" type="button" role="tab">
+            🏛️ Estudios Jurídicos y Winrate ({{ estudios_stats|length }})
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="tab-legal-informes-btn" data-bs-toggle="tab"
+                data-bs-target="#pane-legal-informes" type="button" role="tab">
+            📩 Informes y Reportes Bimestrales
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="tab-legal-graficos-btn" data-bs-toggle="tab"
+                data-bs-target="#pane-legal-graficos" type="button" role="tab"
+                onclick="renderizarGraficoLegal()">
+            📊 Estadísticas de Provisión y Litigios
+        </button>
+    </li>
+</ul>
+
+<div class="tab-content">
+    <!-- ===================================================== -->
+    <!-- PESTAÑA 1: TABLA, SEGMENTACIÓN CIVIL/PENAL Y PROVISIÓN -->
+    <!-- ===================================================== -->
+    <div class="tab-pane fade show active" id="pane-legal-tabla" role="tabpanel">
+        <div class="row g-3 mb-3">
+            <div class="col-md-3">
+                <div class="card text-bg-primary shadow-sm h-100">
+                    <div class="card-body py-2 px-3">
+                        <small class="text-uppercase fw-bold opacity-75">Provisión Recomendada CLP</small>
+                        <h3 class="fw-extrabold mb-0" id="kpiLegalClp">{{ kpi_legal_clp_fmt }}</h3>
+                        <small id="kpiLegalSubCausas">{{ kpi_legal_total }} causas visibles</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-bg-success shadow-sm h-100">
+                    <div class="card-body py-2 px-3">
+                        <small class="text-uppercase fw-bold opacity-75">Provisión Recomendada UF</small>
+                        <h3 class="fw-extrabold mb-0" id="kpiLegalUf">{{ kpi_legal_uf_fmt }}</h3>
+                        <small>Calculado sobre causas filtradas</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-white border shadow-sm h-100">
+                    <div class="card-body py-2 px-3">
+                        <small class="text-uppercase fw-bold text-secondary">Estado de Causas</small>
+                        <div class="d-flex justify-content-between align-items-baseline mt-1">
+                            <div><span class="fs-4 fw-bold text-primary" id="kpiLegalProceso">{{ kpi_legal_proceso }}</span> <small class="text-muted">En Proceso</small></div>
+                            <div><span class="fs-4 fw-bold text-dark" id="kpiLegalTerminadas">{{ kpi_legal_terminadas }}</span> <small class="text-muted">Terminadas</small></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-white border shadow-sm h-100">
+                    <div class="card-body py-2 px-3">
+                        <small class="text-uppercase fw-bold text-secondary">Causas con Hallazgo</small>
+                        <div class="d-flex justify-content-between align-items-center mt-1">
+                            <h3 class="fw-extrabold mb-0 text-warning-emphasis" id="kpiLegalHallazgos">🔍 {{ kpi_legal_hallazgos }}</h3>
+                            <button type="button" class="btn btn-sm btn-primary fw-bold" onclick="abrirModalCausaCrear()">
+                                ➕ Nueva Causa
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm mb-3">
+            <div class="card-header bg-white py-2 d-flex flex-wrap justify-content-between align-items-center gap-2">
+                <div class="btn-group btn-group-sm" role="group">
+                    <input type="radio" class="btn-check" name="radioBloqueLegal" id="radBloqueTodos" value="TODOS" checked onchange="aplicarFiltrosCausas()">
+                    <label class="btn btn-outline-dark fw-bold" for="radBloqueTodos">Todas las Áreas</label>
+
+                    <input type="radio" class="btn-check" name="radioBloqueLegal" id="radBloqueCivil" value="CIVIL" onchange="aplicarFiltrosCausas()">
+                    <label class="btn btn-outline-dark fw-bold" for="radBloqueCivil">🏛️ Bloque Civil (Civil / JPL / Arb / Rec)</label>
+
+                    <input type="radio" class="btn-check" name="radioBloqueLegal" id="radBloquePenal" value="PENAL" onchange="aplicarFiltrosCausas()">
+                    <label class="btn btn-outline-dark fw-bold" for="radBloquePenal">⚖️ Bloque Penal</label>
+                </div>
+
+                <div class="d-flex flex-wrap align-items-center gap-2">
+                    <select id="filtroLegalCompetencia" class="form-select form-select-sm" style="width: 140px;" onchange="aplicarFiltrosCausas()">
+                        <option value="TODOS">Competencia (Todas)</option>
+                        {% for comp in competencias_legal %}
+                            <option value="{{ comp }}">{{ comp }}</option>
+                        {% endfor %}
+                    </select>
+
+                    <select id="filtroLegalEstudio" class="form-select form-select-sm" style="width: 210px;" onchange="aplicarFiltrosCausas()">
+                        <option value="TODOS">Estudio Jurídico (Todos)</option>
+                        {% for est in estudios_catalogo %}
+                            <option value="{{ est }}">{{ est }}</option>
+                        {% endfor %}
+                    </select>
+
+                    <select id="filtroLegalEstado" class="form-select form-select-sm" style="width: 135px;" onchange="aplicarFiltrosCausas()">
+                        <option value="TODOS">Estado (Todos)</option>
+                        {% for est_c in estados_legal %}
+                            <option value="{{ est_c }}">{{ est_c }}</option>
+                        {% endfor %}
+                    </select>
+
+                    <select id="filtroLegalHallazgo" class="form-select form-select-sm" style="width: 150px;" onchange="aplicarFiltrosCausas()">
+                        <option value="TODOS">Hallazgos (Todos)</option>
+                        <option value="SI">🔍 Con Hallazgo</option>
+                        <option value="NO">Sin Hallazgo</option>
+                    </select>
+
+                    <input type="text" id="buscadorCausasLegales" class="form-control form-control-sm"
+                           style="width: 210px;" placeholder="Buscar siniestro, RUC, RIT, nombre..."
+                           oninput="aplicarFiltrosCausas()">
+
+                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="limpiarFiltrosCausas()">
+                        Limpiar
+                    </button>
+                </div>
+            </div>
+
+            <div class="table-responsive contenedor-tabla-consolidado">
+                <table class="table table-hover table-bordered align-middle mb-0 small" id="tablaCausasLegales">
+                    <thead class="table-dark sticky-top">
+                        <tr>
+                            <th>Acción</th>
+                            <th>ID</th>
+                            <th>Siniestro</th>
+                            <th>Área / Comp.</th>
+                            <th>Rotulado / Asegurado</th>
+                            <th>Estudio Jurídico</th>
+                            <th>Tribunal / RIT / RUC</th>
+                            <th>Estado / Sentencia</th>
+                            <th>Provisión</th>
+                            <th>Días Háb.</th>
+                            <th>Hallazgo</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for c in registros_legales %}
+                        <tr data-bloque="{{ c.bloque_legal }}"
+                            data-competencia="{{ c.competencia }}"
+                            data-estudio="{{ c.estudio }}"
+                            data-estado="{{ c.estado }}"
+                            data-hallazgo="{{ c.hallazgo }}"
+                            data-moneda="{{ c.moneda }}"
+                            data-provision="{{ c.provision }}">
+                            <td class="text-center">
+                                <button type="button" class="btn btn-sm btn-warning fw-bold"
+                                        onclick="abrirModalCausaEditar(this)"
+                                        data-fila="{{ c.fila_excel }}"
+                                        data-id="{{ c.id_causa }}"
+                                        data-siniestro="{{ c.siniestro }}"
+                                        data-fcreacion="{{ c.fecha_creacion_iso }}"
+                                        data-calificacion="{{ c.calificacion }}"
+                                        data-fpjud="{{ c.fecha_pjud_iso }}"
+                                        data-fnotif="{{ c.fecha_notif_iso }}"
+                                        data-fasig="{{ c.fecha_asig_iso }}"
+                                        data-ftermino="{{ c.fecha_termino_iso }}"
+                                        data-motivo="{{ c.motivo_delito }}"
+                                        data-parte="{{ c.parte }}"
+                                        data-moneda="{{ c.moneda }}"
+                                        data-provision="{{ c.provision }}"
+                                        data-estadosiniestro="{{ c.estado_siniestro }}"
+                                        data-rotulado="{{ c.rotulado }}"
+                                        data-asegurado="{{ c.asegurado }}"
+                                        data-competencia="{{ c.competencia }}"
+                                        data-ruc="{{ c.ruc }}"
+                                        data-rit="{{ c.rit }}"
+                                        data-tribunal="{{ c.tribunal }}"
+                                        data-analista="{{ c.analista }}"
+                                        data-liquidador="{{ c.liquidador }}"
+                                        data-corredor="{{ c.corredor }}"
+                                        data-estudio="{{ c.estudio }}"
+                                        data-estado="{{ c.estado }}"
+                                        data-sentencia="{{ c.sentencia }}"
+                                        data-etapa="{{ c.etapa_procesal }}"
+                                        data-observacion="{{ c.observacion }}"
+                                        data-marcafidsin="{{ c.marca_fidsin }}"
+                                        data-etapafidsin="{{ c.etapa_fidsin }}">
+                                    ✏️ Editar
+                                </button>
+                            </td>
+                            <td class="fw-bold text-nowrap">{{ c.id_causa }}</td>
+                            <td>{{ c.siniestro }}</td>
+                            <td>
+                                {% if c.bloque_legal == 'PENAL' %}
+                                    <span class="badge bg-dark">Penal</span>
+                                {% else %}
+                                    <span class="badge bg-info text-dark">{{ c.competencia }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="fw-bold text-truncate" style="max-width: 220px;" title="{{ c.rotulado }}">{{ c.rotulado }}</div>
+                                <small class="text-muted">{{ c.asegurado }}</small>
+                            </td>
+                            <td class="fw-semibold">{{ c.estudio }}</td>
+                            <td>
+                                <div class="text-truncate" style="max-width: 200px;" title="{{ c.tribunal }}">{{ c.tribunal }}</div>
+                                <small class="text-muted">RIT: {{ c.rit|default:"-" }} | RUC: {{ c.ruc|default:"-" }}</small>
+                            </td>
+                            <td>
+                                <span class="badge {% if c.estado == 'Terminada' %}bg-secondary{% else %}bg-success{% endif %}">
+                                    {{ c.estado }}
+                                </span>
+                                {% if c.sentencia != '-' %}
+                                    <div class="mt-1">
+                                        <span class="badge {% if c.resultado_win == 'A_FAVOR' %}bg-success-subtle text-success border border-success{% else %}bg-danger-subtle text-danger border border-danger{% endif %}">
+                                            {{ c.sentencia }}
+                                        </span>
+                                    </div>
+                                {% endif %}
+                            </td>
+                            <td class="fw-bold text-end text-nowrap">{{ c.provision_fmt }}</td>
+                            <td class="text-center">{{ c.dias_gestion|default:"-" }}</td>
+                            <td class="text-center">
+                                {% if c.hallazgo == 'SI' %}
+                                    <span class="badge bg-warning text-dark">🔍 Hallazgo</span>
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================================================== -->
+    <!-- PESTAÑA 2: DIRECTORIO DE ESTUDIOS JURÍDICOS Y WINRATE -->
+    <!-- ===================================================== -->
+    <div class="tab-pane fade" id="pane-legal-estudios" role="tabpanel">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+                <h5 class="fw-bold mb-0">Desempeño y Winrate por Estudio Jurídico</h5>
+                <small class="text-muted">
+                    Haz clic en cualquier tarjeta para abrir el detalle completo de sus causas, provisiones y sentencias (DNP, Sobreseimiento y En Contra = Derrota; resto = Victoria).
+                </small>
+            </div>
+        </div>
+
+        <div class="row g-3">
+            {% for st in estudios_stats %}
+            <div class="col-md-6 col-lg-4">
+                <div class="card shadow-sm h-100 border-0 estudio-preview-card"
+                     style="cursor: pointer;"
+                     onclick="abrirDetalleEstudio('{{ st.nombre|escapejs }}')">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h6 class="fw-bold mb-0 text-truncate pe-2" title="{{ st.nombre }}">{{ st.nombre }}</h6>
+                            <span class="badge bg-primary">{{ st.total }} causas</span>
+                        </div>
+
+                        <div class="mb-2">
+                            <div class="d-flex justify-content-between small fw-bold mb-1">
+                                <span>Winrate ({{ st.con_sentencia }} con sentencia)</span>
+                                <span class="{% if st.winrate >= 60 %}text-success{% elif st.winrate > 0 %}text-warning-emphasis{% else %}text-muted{% endif %}">
+                                    {{ st.winrate }}% ({{ st.ganadas }}W / {{ st.perdidas }}L)
+                                </span>
+                            </div>
+                            <div class="progress" style="height: 8px;">
+                                <div class="progress-bar bg-success barra-winrate" role="progressbar"
+                                     data-winrate="{{ st.winrate|stringformat:'f' }}"></div>
+                            </div>
+                        </div>
+
+                        <div class="mb-2">
+                            {% if st.informe %}
+                                <span class="badge {% if st.informe.atraso_dias == 0 %}bg-success-subtle text-success border border-success{% else %}bg-warning-subtle text-dark border border-warning{% endif %}">
+                                    📩 Informe {{ st.informe.periodo }}: {{ st.informe.fecha_recepcion }}
+                                    ({% if st.informe.atraso_dias == 0 %}Al día{% else %}{{ st.informe.atraso_dias }}d atraso{% endif %})
+                                </span>
+                            {% else %}
+                                <span class="badge bg-secondary-subtle text-secondary border">
+                                    📭 Sin informe registrado en el período
+                                </span>
+                            {% endif %}
+                        </div>
+
+                        <div class="row g-2 small mt-2 pt-2 border-top">
+                            <div class="col-6">
+                                <span class="text-muted d-block">Provisión CLP:</span>
+                                <strong class="text-dark">{{ st.provision_clp_fmt }}</strong>
+                            </div>
+                            <div class="col-6">
+                                <span class="text-muted d-block">Provisión UF:</span>
+                                <strong class="text-dark">{{ st.provision_uf_fmt }}</strong>
+                            </div>
+                            <div class="col-6">
+                                <span class="text-muted d-block">Distribución Área:</span>
+                                <strong>{{ st.civil }} Civil · {{ st.penal }} Penal</strong>
+                            </div>
+                            <div class="col-6">
+                                <span class="text-muted d-block">Estado / Hallazgos:</span>
+                                <strong>{{ st.en_proceso }} Activas · 🔍 {{ st.hallazgos }}</strong>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer bg-light py-1 text-end small fw-semibold text-primary">
+                        Ver causas y estadísticas del estudio →
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- ===================================================== -->
+    <!-- PESTAÑA 3: INFORMES RECIBIDOS Y REPORTES BIMESTRALES  -->
+    <!-- ===================================================== -->
+    <div class="tab-pane fade" id="pane-legal-informes" role="tabpanel">
+        <div class="row g-3">
+            <!-- Sub-bloque A: Hoja 'Informes recibidos' -->
+            <div class="col-lg-5">
+                <div class="card shadow-sm h-100">
+                    <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center py-2">
+                        <span class="fw-bold">📩 Control de Recepción de Informes</span>
+                        <button type="button" class="btn btn-sm btn-primary fw-bold"
+                                data-bs-toggle="modal" data-bs-target="#modalRegistrarInforme">
+                            ➕ Registrar Recepción
+                        </button>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive" style="max-height: 65vh;">
+                            <table class="table table-sm table-hover table-bordered align-middle mb-0 small">
+                                <thead class="table-light sticky-top">
+                                    <tr>
+                                        <th>Recepción</th>
+                                        <th>Estudio Jurídico</th>
+                                        <th>Área / Período</th>
+                                        <th>SLA / Atraso</th>
+                                        <th>Observaciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for inf in informes_recibidos_list %}
+                                    <tr>
+                                        <td class="text-nowrap fw-semibold">{{ inf.fecha_recepcion }}</td>
+                                        <td class="fw-bold">{{ inf.estudio }}</td>
+                                        <td>
+                                            <span class="badge bg-info text-dark">{{ inf.area }}</span>
+                                            <small class="d-block text-muted">{{ inf.periodo }}</small>
+                                        </td>
+                                        <td class="text-center">
+                                            {% if inf.atraso_dias == 0 %}
+                                                <span class="badge bg-success">A tiempo (0d)</span>
+                                            {% else %}
+                                                <span class="badge bg-danger">{{ inf.atraso_dias }} días atraso</span>
+                                            {% endif %}
+                                            <small class="d-block text-muted">Lím: {{ inf.fecha_limite }}</small>
+                                        </td>
+                                        <td class="small text-muted">{{ inf.observaciones|default:"-" }}</td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="5" class="text-center py-3 text-muted">No hay recepciones registradas.</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sub-bloque B: Hoja 'Reportes estudios' (Matriz Bimestral por Causa) -->
+            <div class="col-lg-7">
+                <div class="card shadow-sm h-100">
+                    <div class="card-header bg-dark text-white d-flex flex-wrap justify-content-between align-items-center py-2 gap-2">
+                        <span class="fw-bold">🗂️ Bitácora Bimestral por Causa (Hoja Reportes estudios)</span>
+                        <input type="text" id="buscadorReportesEstudios" class="form-control form-control-sm"
+                               style="width: 240px;" placeholder="Filtrar por ID, siniestro o estudio..."
+                               oninput="filtrarTablaReportesEstudios()">
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive" style="max-height: 65vh;">
+                            <table class="table table-sm table-hover table-bordered align-middle mb-0 small" id="tablaReportesEstudios">
+                                <thead class="table-light sticky-top">
+                                    <tr>
+                                        <th>Acción</th>
+                                        <th>ID / Siniestro</th>
+                                        <th>Estudio / Área</th>
+                                        <th>Último Período</th>
+                                        <th>Contenido del Último Reporte</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for rep in reportes_estudios_list %}
+                                    <tr>
+                                        <td class="text-center">
+                                            <button type="button" class="btn btn-sm btn-outline-primary fw-bold"
+                                                    onclick="abrirModalReporteBimestral(this)"
+                                                    data-filarep="{{ rep.fila_reporte }}"
+                                                    data-id="{{ rep.id_causa }}"
+                                                    data-estudio="{{ rep.estudio }}"
+                                                    data-anteriores="{{ rep.rep_anteriores }}"
+                                                    data-oct2026="{{ rep.oct_2026 }}"
+                                                    data-dic2026="{{ rep.dic_2026 }}"
+                                                    data-feb2027="{{ rep.feb_2027 }}"
+                                                    data-abr2027="{{ rep.abr_2027 }}"
+                                                    data-jun2027="{{ rep.jun_2027 }}"
+                                                    data-ago2027="{{ rep.ago_2027 }}"
+                                                    data-oct2027="{{ rep.oct_2027 }}"
+                                                    data-dic2027="{{ rep.dic_2027 }}">
+                                                📝 Editar
+                                            </button>
+                                        </td>
+                                        <td class="text-nowrap">
+                                            <strong>{{ rep.id_causa }}</strong>
+                                            <small class="d-block text-muted">{{ rep.siniestro }}</small>
+                                        </td>
+                                        <td>
+                                            <div class="fw-semibold text-truncate" style="max-width: 170px;" title="{{ rep.estudio }}">{{ rep.estudio }}</div>
+                                            <span class="badge bg-secondary">{{ rep.competencia }} · {{ rep.estado }}</span>
+                                        </td>
+                                        <td class="text-nowrap">
+                                            {% if rep.ultimo_periodo %}
+                                                <span class="badge bg-success-subtle text-success border border-success">{{ rep.ultimo_periodo }}</span>
+                                            {% else %}
+                                                <span class="badge bg-light text-muted border">Sin reporte</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <div class="text-truncate" style="max-width: 280px;" title="{{ rep.ultimo_texto }}">
+                                                {{ rep.ultimo_texto|default:"-" }}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================================================== -->
+    <!-- PESTAÑA 4: ESTADÍSTICAS Y GRÁFICOS DE PROVISIÓN       -->
+    <!-- ===================================================== -->
+    <div class="tab-pane fade" id="pane-legal-graficos" role="tabpanel">
+        <div class="card shadow-sm mb-3">
+            <div class="card-header bg-dark text-white fw-bold py-2">
+                ⚙️ Configuración de Estadísticas Legales y Provisión
+            </div>
+            <div class="card-body py-2">
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-4">
+                        <label class="form-label small fw-bold mb-1">Dimensión a analizar</label>
+                        <select id="leg_tipo_grafico" class="form-select form-select-sm" onchange="renderizarGraficoLegal()">
+                            <option value="provision_estudio">Provisión y Volumen por Estudio Jurídico</option>
+                            <option value="winrate_estudio">Winrate (%) por Estudio Jurídico</option>
+                            <option value="competencia">Distribución por Competencia (Civil, Penal, JPL, etc.)</option>
+                            <option value="motivos_civiles">🏛️ Top Motivos de Demanda (Solo Causas Civiles)</option>
+                            <option value="delitos_penales">⚖️ Top Delitos Investigados (Solo Causas Penales)</option>
+                            <option value="evolucion_anual">Evolución de Causas por Año de Creación</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small fw-bold mb-1">Métrica / Moneda</label>
+                        <select id="leg_metrica_grafico" class="form-select form-select-sm" onchange="renderizarGraficoLegal()">
+                            <option value="cantidad">Cantidad de Causas</option>
+                            <option value="clp">Monto Provisión CLP ($)</option>
+                            <option value="uf">Monto Provisión UF</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small fw-bold mb-1">Área Legal</label>
+                        <select id="leg_bloque_grafico" class="form-select form-select-sm" onchange="renderizarGraficoLegal()">
+                            <option value="TODOS">Todas (Civil + Penal)</option>
+                            <option value="CIVIL">Solo Bloque Civil (Civil/JPL/Arb/Rec)</option>
+                            <option value="PENAL">Solo Bloque Penal</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label small fw-bold mb-1">Hallazgos</label>
+                        <select id="leg_hallazgo_grafico" class="form-select form-select-sm" onchange="renderizarGraficoLegal()">
+                            <option value="TODOS">Todos</option>
+                            <option value="SI">🔍 Solo con Hallazgo</option>
+                            <option value="NO">Sin Hallazgo</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center py-2">
+                <span class="fw-bold" id="leg_titulo_grafico">Estadísticas de Causas Legales</span>
+                <span class="badge bg-primary" id="leg_resumen_grafico">0 causas</span>
+            </div>
+            <div class="card-body">
+                <div style="position: relative; height: 420px; width: 100%;">
+                    <canvas id="canvasGraficoLegal"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
