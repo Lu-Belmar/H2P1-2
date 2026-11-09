@@ -27,12 +27,12 @@ function actualizarTopLiquidadorYReclamante() {
     const conteoReclamante = {};
 
     filasVisibles.forEach(fila => {
-        const liq = _extraerCampoFilaCmf(fila, ['liquidador', 'liqtaller', 'liquidadortaller', 'taller']);
+        const liq = _extraerCampoFilaCmf(fila, ['liquidador']);
         if (liq && !IGNORAR_VALORES_CMF.has(liq.toUpperCase())) {
             conteoLiquidador[liq] = (conteoLiquidador[liq] || 0) + 1;
         }
 
-        const rec = _extraerCampoFilaCmf(fila, ['reclamante', 'asegurado', 'nombrereclamante', 'corredor']);
+        const rec = _extraerCampoFilaCmf(fila, ['reclamante', 'asegurado']);
         if (rec && !IGNORAR_VALORES_CMF.has(rec.toUpperCase())) {
             conteoReclamante[rec] = (conteoReclamante[rec] || 0) + 1;
         }
