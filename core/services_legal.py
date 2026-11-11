@@ -161,17 +161,9 @@ def cargar_catalogos_hojas_auxiliares(wb):
 
     return {
         "estudios_catalogo": estudios or [
-            "Estudio Carvallo Abogados SpA",
-            "Fiscalia Privada",
-            "Pumpin, Dorfman, Nasser, Díaz y Compañia limitada",
-            "Inzunza y Mohor Ltda.",
-            "Ramdohr Asesorías Legales Ltda",
-            "SILVA & PARMAR ABOGADOS SpA",
-            "Servicios y Asesorias Birkner y Cía. Ltda.",
-            "Ríos Abogados Limitada.",
-            "Sociedad de Profesionales Quezada, Bórquez y Cía. Limitada",
-            "Juan Pablo Cucurella",
-            "Legalchile S.A.",
+            "Estudio Jurídico Externo A",
+            "Estudio Jurídico Externo B",
+            "Asesorías Legales Corporativas SpA",
         ],
         "calificaciones_legal": calificaciones or ["Dinamica", "Robo", "Ramos Varios", "Apropiación Indebida", "No"],
         "motivos_legal": motivos or ["Fraude al seguro", "Incumplimiento de contrato", "Infracción Ley del Consumidor", "Apropiación Indebida", "Arbitraje", "Robo"],

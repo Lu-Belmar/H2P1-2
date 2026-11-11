@@ -13,7 +13,7 @@ MOTIVOS_CATALOGO = [
     "Contrato póliza",
     "Deducible Inteligente",
     "Devolución de Primas",
-    "Caso Rotter & Krauss",
+    "Convenio comercial / Alianza",
     "Incumplimiento servicio asistencia",
     "Estado Denuncio",
     "Indemnizado no reparado",

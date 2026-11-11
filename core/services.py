@@ -11,6 +11,7 @@ from .utils import (
 )
 
 from collections import Counter
+from .constants import MESES_ES, MOTIVOS_CATALOGO
 
 VALORES_IGNORADOS_RANKING = {"", "-", "N/A", "NO APLICA", "SIN DATO", "NONE", "NO", "S/I", "SIN INFORMACION", "SIN INFORMACIÓN"}
 
@@ -234,8 +235,11 @@ def construir_contexto_consolidado(registros):
         registros,
         ["reclamante", "asegurado", "nombre"],
     )
-
+    motivos_en_excel = [r["motivo"] for r in registros if r.get("motivo")]
+    motivos_dinamicos = list(dict.fromkeys(MOTIVOS_CATALOGO + motivos_en_excel))
     return {
+        "datos_cargados": True,
+        "motivos_catalogo": motivos_dinamicos,
         "datos_cargados": True,
         "registros": list(reversed(registros)),
         "total_filas": len(registros),
