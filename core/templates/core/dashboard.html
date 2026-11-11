@@ -94,6 +94,9 @@
         {% elif es_hoja_causas_legales %}
             <!-- MÓDULO 2: CAUSAS LEGALES ("CONSOLIDADO CAUSAS FID") -->
             {% include "core/partials/legal/_contenedor_legal.html" %}
+        {% elif es_hoja_querellas_sisgen %}
+            <!-- MÓDULO 2B: QUERELLAS VS SISGEN -->
+            {% include "core/partials/legal/_tab_querellas_sisgen.html" %}
 
         {% else %}
             <!-- MÓDULO 3: CUALQUIER OTRA HOJA DEL EXCEL -->

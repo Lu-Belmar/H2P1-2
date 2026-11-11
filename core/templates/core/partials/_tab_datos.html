@@ -64,31 +64,141 @@
 
 <!-- Barra de Filtros de la Tabla CMF -->
 <div class="card shadow-sm mb-3">
+    <!-- Reemplazar el card-header de filtros en core/templates/core/partials/_tab_datos.html -->
     <div class="card-header bg-white py-2 d-flex flex-wrap justify-content-between align-items-center gap-2">
         <div class="d-flex flex-wrap align-items-center gap-2">
-            <select id="filtroAnio" class="form-select form-select-sm" style="width: 130px;" onchange="aplicarFiltrosConsolidado()">
-                <option value="TODOS">Año (Todos)</option>
-                {% for anio in anios_disponibles %}
-                    <option value="{{ anio }}">{{ anio }}</option>
-                {% endfor %}
-            </select>
+            <!-- Multi-Check: Año -->
+            <div class="dropdown">
+                <button class="form-select form-select-sm text-start text-truncate" type="button"
+                        id="btnDropCmfAnio" style="width: 135px;"
+                        data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
+                    Año (Todos)
+                </button>
+                <div class="dropdown-menu p-2 shadow-sm" style="min-width: 170px;" aria-labelledby="btnDropCmfAnio">
+                    <div class="form-check border-bottom pb-1 mb-1">
+                        <input class="form-check-input" type="checkbox" id="chk_cmf_anio_todos" checked
+                               onchange="toggleTodosChecksFiltroCmf('anio', this.checked)">
+                        <label class="form-check-label small fw-bold w-100" for="chk_cmf_anio_todos">Todos los años</label>
+                    </div>
+                    {% for anio in anios_disponibles %}
+                        <div class="form-check mb-1">
+                            <input class="form-check-input check-cmf-anio" type="checkbox"
+                                   value="{{ anio }}" id="chk_cmf_anio_{{ forloop.counter }}" checked
+                                   onchange="actualizarDropdownFiltroCmf('anio')">
+                            <label class="form-check-label small w-100" for="chk_cmf_anio_{{ forloop.counter }}">{{ anio }}</label>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
 
-            <select id="filtroMes" class="form-select form-select-sm" style="width: 140px;" onchange="aplicarFiltrosConsolidado()">
-                <option value="TODOS">Mes (Todos)</option>
-                <option value="01">Enero</option><option value="02">Febrero</option><option value="03">Marzo</option>
-                <option value="04">Abril</option><option value="05">Mayo</option><option value="06">Junio</option>
-                <option value="07">Julio</option><option value="08">Agosto</option><option value="09">Septiembre</option>
-                <option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option>
-            </select>
+            <!-- Multi-Check: Mes -->
+            <div class="dropdown">
+                <button class="form-select form-select-sm text-start text-truncate" type="button"
+                        id="btnDropCmfMes" style="width: 140px;"
+                        data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
+                    Mes (Todos)
+                </button>
+                <div class="dropdown-menu p-2 shadow-sm" style="min-width: 185px; max-height: 280px; overflow-y: auto;" aria-labelledby="btnDropCmfMes">
+                    <div class="form-check border-bottom pb-1 mb-1">
+                        <input class="form-check-input" type="checkbox" id="chk_cmf_mes_todos" checked
+                               onchange="toggleTodosChecksFiltroCmf('mes', this.checked)">
+                        <label class="form-check-label small fw-bold w-100" for="chk_cmf_mes_todos">Todos los meses</label>
+                    </div>
+                    <div class="form-check mb-1"><input class="form-check-input check-cmf-mes" type="checkbox" value="01" id="chk_m_01" checked onchange="actualizarDropdownFiltroCmf('mes')"><label class="form-check-label small w-100" for="chk_m_01">Enero</label></div>
+                    <div class="form-check mb-1"><input class="form-check-input check-cmf-mes" type="checkbox" value="02" id="chk_m_02" checked onchange="actualizarDropdownFiltroCmf('mes')"><label class="form-check-label small w-100" for="chk_m_02">Febrero</label></div>
+                    <div class="form-check mb-1"><input class="form-check-input check-cmf-mes" type="checkbox" value="03" id="chk_m_03" checked onchange="actualizarDropdownFiltroCmf('mes')"><label class="form-check-label small w-100" for="chk_m_03">Marzo</label></div>
+                    <div class="form-check mb-1"><input class="form-check-input check-cmf-mes" type="checkbox" value="04" id="chk_m_04" checked onchange="actualizarDropdownFiltroCmf('mes')"><label class="form-check-label small w-100" for="chk_m_04">Abril</label></div>
+                    <div class="form-check mb-1"><input class="form-check-input check-cmf-mes" type="checkbox" value="05" id="chk_m_05" checked onchange="actualizarDropdownFiltroCmf('mes')"><label class="form-check-label small w-100" for="chk_m_05">Mayo</label></div>
+                    <div class="form-check mb-1"><input class="form-check-input check-cmf-mes" type="checkbox" value="06" id="chk_m_06" checked onchange="actualizarDropdownFiltroCmf('mes')"><label class="form-check-label small w-100" for="chk_m_06">Junio</label></div>
+                    <div class="form-check mb-1"><input class="form-check-input check-cmf-mes" type="checkbox" value="07" id="chk_m_07" checked onchange="actualizarDropdownFiltroCmf('mes')"><label class="form-check-label small w-100" for="chk_m_07">Julio</label></div>
+                    <div class="form-check mb-1"><input class="form-check-input check-cmf-mes" type="checkbox" value="08" id="chk_m_08" checked onchange="actualizarDropdownFiltroCmf('mes')"><label class="form-check-label small w-100" for="chk_m_08">Agosto</label></div>
+                    <div class="form-check mb-1"><input class="form-check-input check-cmf-mes" type="checkbox" value="09" id="chk_m_09" checked onchange="actualizarDropdownFiltroCmf('mes')"><label class="form-check-label small w-100" for="chk_m_09">Septiembre</label></div>
+                    <div class="form-check mb-1"><input class="form-check-input check-cmf-mes" type="checkbox" value="10" id="chk_m_10" checked onchange="actualizarDropdownFiltroCmf('mes')"><label class="form-check-label small w-100" for="chk_m_10">Octubre</label></div>
+                    <div class="form-check mb-1"><input class="form-check-input check-cmf-mes" type="checkbox" value="11" id="chk_m_11" checked onchange="actualizarDropdownFiltroCmf('mes')"><label class="form-check-label small w-100" for="chk_m_11">Noviembre</label></div>
+                    <div class="form-check mb-1"><input class="form-check-input check-cmf-mes" type="checkbox" value="12" id="chk_m_12" checked onchange="actualizarDropdownFiltroCmf('mes')"><label class="form-check-label small w-100" for="chk_m_12">Diciembre</label></div>
+                </div>
+            </div>
 
-            <select id="filtroAnomalia" class="form-select form-select-sm" style="width: 160px;" onchange="aplicarFiltrosConsolidado()">
+            <!-- Multi-Check: Motivo -->
+            <div class="dropdown">
+                <button class="form-select form-select-sm text-start text-truncate" type="button"
+                        id="btnDropCmfMotivo" style="width: 175px;"
+                        data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
+                    Motivo (Todos)
+                </button>
+                <div class="dropdown-menu p-2 shadow-sm" style="min-width: 280px; max-height: 300px; overflow-y: auto;" aria-labelledby="btnDropCmfMotivo">
+                    <div class="form-check border-bottom pb-1 mb-1">
+                        <input class="form-check-input" type="checkbox" id="chk_cmf_motivo_todos" checked
+                               onchange="toggleTodosChecksFiltroCmf('motivo', this.checked)">
+                        <label class="form-check-label small fw-bold w-100" for="chk_cmf_motivo_todos">Todos los motivos</label>
+                    </div>
+                    {% for m in motivos_catalogo %}
+                        <div class="form-check mb-1">
+                            <input class="form-check-input check-cmf-motivo" type="checkbox"
+                                   value="{{ m }}" id="chk_cmf_mot_{{ forloop.counter }}" checked
+                                   onchange="actualizarDropdownFiltroCmf('motivo')">
+                            <label class="form-check-label small w-100" for="chk_cmf_mot_{{ forloop.counter }}">{{ m }}</label>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Multi-Check: Estado -->
+            <div class="dropdown">
+                <button class="form-select form-select-sm text-start text-truncate" type="button"
+                        id="btnDropCmfEstado" style="width: 165px;"
+                        data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
+                    Estado (Todos)
+                </button>
+                <div class="dropdown-menu p-2 shadow-sm" style="min-width: 230px;" aria-labelledby="btnDropCmfEstado">
+                    <div class="form-check border-bottom pb-1 mb-1">
+                        <input class="form-check-input" type="checkbox" id="chk_cmf_estado_todos" checked
+                               onchange="toggleTodosChecksFiltroCmf('estado', this.checked)">
+                        <label class="form-check-label small fw-bold w-100" for="chk_cmf_estado_todos">Todos los estados</label>
+                    </div>
+                    {% for est in estados_catalogo %}
+                        <div class="form-check mb-1">
+                            <input class="form-check-input check-cmf-estado" type="checkbox"
+                                   value="{{ est }}" id="chk_cmf_est_{{ forloop.counter }}" checked
+                                   onchange="actualizarDropdownFiltroCmf('estado')">
+                            <label class="form-check-label small w-100" for="chk_cmf_est_{{ forloop.counter }}">{{ est }}</label>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Multi-Check: Ramo -->
+            <div class="dropdown">
+                <button class="form-select form-select-sm text-start text-truncate" type="button"
+                        id="btnDropCmfRamo" style="width: 135px;"
+                        data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
+                    Ramo (Todos)
+                </button>
+                <div class="dropdown-menu p-2 shadow-sm" style="min-width: 170px;" aria-labelledby="btnDropCmfRamo">
+                    <div class="form-check border-bottom pb-1 mb-1">
+                        <input class="form-check-input" type="checkbox" id="chk_cmf_ramo_todos" checked
+                               onchange="toggleTodosChecksFiltroCmf('ramo', this.checked)">
+                        <label class="form-check-label small fw-bold w-100" for="chk_cmf_ramo_todos">Todos los ramos</label>
+                    </div>
+                    {% for rm in ramos_catalogo %}
+                        <div class="form-check mb-1">
+                            <input class="form-check-input check-cmf-ramo" type="checkbox"
+                                   value="{{ rm }}" id="chk_cmf_rm_{{ forloop.counter }}" checked
+                                   onchange="actualizarDropdownFiltroCmf('ramo')">
+                            <label class="form-check-label small w-100" for="chk_cmf_rm_{{ forloop.counter }}">{{ rm }}</label>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <select id="filtroAnomalia" class="form-select form-select-sm" style="width: 150px;" onchange="aplicarFiltrosConsolidado()">
                 <option value="TODOS">Anomalías (Todas)</option>
-                <option value="SI">⚠️ Con Anomalía</option>
+                <option value="SI">Con Anomalía</option>
                 <option value="NO">Sin Anomalía</option>
             </select>
 
             <input type="text" id="buscadorConsolidado" class="form-control form-control-sm"
-                   style="width: 240px;" placeholder="Buscar N° oficio, siniestro, motivo..."
+                   style="width: 220px;" placeholder="Buscar N° oficio, siniestro, motivo..."
                    oninput="aplicarFiltrosConsolidado()">
 
             <button type="button" class="btn btn-sm btn-outline-secondary" onclick="limpiarFiltrosConsolidado()">
@@ -103,6 +213,7 @@
             <thead class="table-dark sticky-top">
                 <tr>
                     <th>Acción</th>
+                    <th>Nombre Asegurado / Reclamante</th>
                     <th>N° Oficio</th>
                     <th>N° Siniestro</th>
                     <th>F. CMF</th>
@@ -115,23 +226,28 @@
                     <th>Anomalía</th>
                 </tr>
             </thead>
+            <!-- Reemplazar el bloque <tbody>...</tbody> dentro de #tablaConsolidado -->
             <tbody>
                 {% for r in registros %}
                 <tr data-anio="{{ r.anio_fid|default:r.anio_cmf }}"
-                    data-mes="{{ r.fecha_fid_iso|slice:'5:7' }}"
+                    data-mes="{{ r.fecha_fid_iso|slice:'5:7'|default:r.fecha_cmf_iso|slice:'5:7' }}"
+                    data-motivo="{{ r.motivo }}"
+                    data-estado="{{ r.estado }}"
+                    data-ramo="{{ r.ramo }}"
                     data-anomalia="{{ r.tiene_anomalia }}"
-                    data-liquidador="{{ r.liquidador|default:r.liquidador_taller|default:'' }}"
-                    data-reclamante="{{ r.reclamante|default:r.asegurado|default:'' }}">
+                    data-liquidador="{{ r.liquidador }}"
+                    data-reclamante="{{ r.nombre }}">
                     <td class="text-center">
                         <button type="button" class="btn btn-sm btn-warning fw-bold"
                                 onclick="abrirModalEditar(this)"
                                 data-fila="{{ r.fila_excel }}"
                                 data-nombre="{{ r.nombre }}"
-                                data-noficio="{{ r.n_oficio }}"
-                                data-nsiniestro="{{ r.n_siniestro }}"
-                                data-fechacmf="{{ r.fecha_cmf_iso }}"
-                                data-fechalimite="{{ r.fecha_limite_iso }}"
-                                data-fechafid="{{ r.fecha_fid_iso }}"
+                                data-oficio="{{ r.n_oficio }}"
+                                data-siniestro="{{ r.n_siniestro }}"
+                                data-fsiniestro="{{ r.fecha_siniestro_iso }}"
+                                data-fcmf="{{ r.fecha_cmf_iso }}"
+                                data-flimite="{{ r.fecha_limite_iso }}"
+                                data-ffid="{{ r.fecha_fid_iso }}"
                                 data-motivo="{{ r.motivo }}"
                                 data-respuesta="{{ r.respuesta }}"
                                 data-estado="{{ r.estado }}"
@@ -140,17 +256,22 @@
                                 data-zendesk="{{ r.zendesk }}"
                                 data-observaciones="{{ r.observaciones }}"
                                 data-legal="{{ r.legal }}"
-                                data-liquidador="{{ r.liquidador|default:r.liquidador_taller|default:'' }}"
-                                data-reclamante="{{ r.reclamante|default:r.asegurado|default:'' }}">
-                            ✏️ Editar
+                                data-liquidador="{{ r.liquidador }}"
+                                data-reclamante="{{ r.nombre }}">
+                            Editar
                         </button>
+                    </td>
+                    <td>
+                        <div class="fw-bold text-truncate" style="max-width: 200px;" title="{{ r.nombre }}">
+                            {{ r.nombre|default:"-" }}
+                        </div>
                     </td>
                     <td class="fw-bold">{{ r.n_oficio }}</td>
                     <td>{{ r.n_siniestro }}</td>
                     <td class="text-center">{{ r.fecha_cmf }}</td>
                     <td class="text-center">{{ r.fecha_limite }}</td>
                     <td class="text-center">{{ r.fecha_fid }}</td>
-                    <td class="text-center fw-bold {% if r.dias_demora > 0 %}text-danger{% else %}text-success{% endif %}">
+                    <td class="text-center fw-bold {% if r.dias_demora_num > 0 %}text-danger{% else %}text-success{% endif %}">
                         {{ r.dias_demora }}
                     </td>
                     <td>{{ r.motivo }}</td>
@@ -162,7 +283,7 @@
                     <td class="text-center">{{ r.ramo }}</td>
                     <td class="text-center">
                         {% if r.tiene_anomalia == 'SI' %}
-                            <span class="badge bg-danger">⚠️ Sí</span>
+                            <span class="badge bg-danger">Sí</span>
                         {% else %}
                             <span class="text-muted">No</span>
                         {% endif %}

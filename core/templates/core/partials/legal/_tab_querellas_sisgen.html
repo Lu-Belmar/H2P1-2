@@ -1,0 +1,273 @@
+<!-- core/templates/core/partials/legal/_tab_querellas_sisgen.html -->
+<div class="row g-3 mb-3">
+    <div class="col-md-3">
+        <div class="card text-bg-primary shadow-sm h-100">
+            <div class="card-body py-2 px-3">
+                <small class="text-uppercase fw-bold opacity-75">Total Querellas vs SISGEN</small>
+                <h3 class="fw-extrabold mb-0" id="kpiSisgenTotal">{{ kpi_sisgen_total }}</h3>
+                <small id="kpiSisgenSubTotal">{{ kpi_sisgen_total }} registros visibles</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-bg-success shadow-sm h-100">
+            <div class="card-body py-2 px-3">
+                <small class="text-uppercase fw-bold opacity-75">Cruce SISGEN Identificado</small>
+                <div class="d-flex justify-content-between align-items-baseline mt-1">
+                    <div>
+                        <span class="fs-3 fw-extrabold text-white" id="kpiSisgenConCruce">{{ kpi_sisgen_con_cruce }}</span>
+                        <small class="opacity-75">Con SISGEN</small>
+                    </div>
+                    <div>
+                        <span class="fs-4 fw-bold text-white-50" id="kpiSisgenSinCruce">{{ kpi_sisgen_sin_cruce }}</span>
+                        <small class="opacity-75">Sin datos</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-white border shadow-sm h-100">
+            <div class="card-body py-2 px-3">
+                <small class="text-uppercase fw-bold text-secondary">Cía. Más Frecuente en SISGEN</small>
+                <h5 class="fw-extrabold mb-0 mt-1 text-truncate text-dark" id="kpiSisgenTopCia" title="{{ kpi_sisgen_top_cia }}">
+                    {{ kpi_sisgen_top_cia }}
+                </h5>
+                <small class="text-muted">Según registros filtrados</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-white border shadow-sm h-100">
+            <div class="card-body py-2 px-3 d-flex flex-column justify-content-center">
+                <small class="text-uppercase fw-bold text-secondary mb-1">Gestión en Vivo</small>
+                <div>
+                    <button type="button" class="btn btn-sm btn-primary fw-bold" onclick="abrirModalSisgenCrear()">
+                        + Nuevo Registro SISGEN
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm mb-3">
+    <div class="card-header bg-white py-2 d-flex flex-wrap justify-content-between align-items-center gap-2">
+        <!-- Botones superiores por estado de cruce SISGEN -->
+        <div class="btn-group btn-group-sm" role="group">
+            <input type="radio" class="btn-check" name="radioCruceSisgen" id="radSisgenTodos" value="TODOS" checked onchange="aplicarFiltrosSisgen()">
+            <label class="btn btn-outline-dark fw-bold" for="radSisgenTodos">Todos los registros</label>
+
+            <input type="radio" class="btn-check" name="radioCruceSisgen" id="radSisgenCon" value="SI" onchange="aplicarFiltrosSisgen()">
+            <label class="btn btn-outline-dark fw-bold" for="radSisgenCon">Con Antecedentes SISGEN</label>
+
+            <input type="radio" class="btn-check" name="radioCruceSisgen" id="radSisgenSin" value="NO" onchange="aplicarFiltrosSisgen()">
+            <label class="btn btn-outline-dark fw-bold" for="radSisgenSin">Sin Antecedentes SISGEN</label>
+        </div>
+
+        <div class="d-flex flex-wrap align-items-center gap-2">
+            <!-- Dropdown Multi-Check: Motivo - Delito -->
+            <div class="dropdown">
+                <button class="form-select form-select-sm text-start text-truncate" type="button"
+                        id="btnDropSisgenMotivo" style="width: 195px;"
+                        data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
+                    Motivo - Delito (Todos)
+                </button>
+                <div class="dropdown-menu p-2 shadow-sm" style="min-width: 260px; max-height: 280px; overflow-y: auto;" aria-labelledby="btnDropSisgenMotivo">
+                    <div class="form-check border-bottom pb-1 mb-1">
+                        <input class="form-check-input" type="checkbox" id="chk_sis_motivo_todos" checked
+                               onchange="toggleTodosChecksFiltroSisgen('motivo', this.checked)">
+                        <label class="form-check-label small fw-bold w-100" for="chk_sis_motivo_todos">Todos los motivos / delitos</label>
+                    </div>
+                    {% for mot in motivos_sisgen %}
+                        <div class="form-check mb-1">
+                            <input class="form-check-input check-sisgen-motivo" type="checkbox"
+                                   value="{{ mot }}" id="chk_sis_mot_{{ forloop.counter }}" checked
+                                   onchange="actualizarDropdownFiltroSisgen('motivo')">
+                            <label class="form-check-label small w-100" for="chk_sis_mot_{{ forloop.counter }}">{{ mot }}</label>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Dropdown Multi-Check: Compañía (Cía) -->
+            <div class="dropdown">
+                <button class="form-select form-select-sm text-start text-truncate" type="button"
+                        id="btnDropSisgenCia" style="width: 185px;"
+                        data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
+                    Cía. SISGEN (Todas)
+                </button>
+                <div class="dropdown-menu p-2 shadow-sm" style="min-width: 260px; max-height: 280px; overflow-y: auto;" aria-labelledby="btnDropSisgenCia">
+                    <div class="form-check border-bottom pb-1 mb-1">
+                        <input class="form-check-input" type="checkbox" id="chk_sis_cia_todos" checked
+                               onchange="toggleTodosChecksFiltroSisgen('cia', this.checked)">
+                        <label class="form-check-label small fw-bold w-100" for="chk_sis_cia_todos">Todas las compañías</label>
+                    </div>
+                    {% for cia_item in cias_sisgen %}
+                        <div class="form-check mb-1">
+                            <input class="form-check-input check-sisgen-cia" type="checkbox"
+                                   value="{{ cia_item }}" id="chk_sis_cia_{{ forloop.counter }}" checked
+                                   onchange="actualizarDropdownFiltroSisgen('cia')">
+                            <label class="form-check-label small w-100" for="chk_sis_cia_{{ forloop.counter }}">{{ cia_item }}</label>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <input type="text" id="buscadorQuerellasSisgen" class="form-control form-control-sm"
+                   style="width: 230px;" placeholder="Buscar siniestro, RUT, asegurado, Cía..."
+                   oninput="aplicarFiltrosSisgen()">
+
+            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="limpiarFiltrosSisgen()">
+                Limpiar
+            </button>
+        </div>
+    </div>
+
+    <!-- Tabla con las 9 Columnas Amarillas del Excel -->
+    <div class="table-responsive contenedor-tabla-consolidado">
+        <table class="table table-hover table-bordered align-middle mb-0 small" id="tablaQuerellasSisgen">
+            <thead class="table-dark sticky-top">
+                <tr>
+                    <th>Acción</th>
+                    <th>Siniestro</th>
+                    <th>Motivo - Delito</th>
+                    <th>ROTULADO</th>
+                    <th>Nombre Asegurado</th>
+                    <th>RUT</th>
+                    <th>Último Siniestro SISGEN</th>
+                    <th>Fecha Siniestro SISGEN</th>
+                    <th>Cía</th>
+                    <th>Observaciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in registros_sisgen %}
+                <tr data-cruce="{{ r.tiene_cruce_sisgen }}"
+                    data-motivo="{{ r.motivo_delito }}"
+                    data-cia="{{ r.cia }}">
+                    <td class="text-center">
+                        <button type="button" class="btn btn-sm btn-warning fw-bold"
+                                onclick="abrirModalSisgenEditar(this)"
+                                data-fila="{{ r.fila_excel }}"
+                                data-id="{{ r.id_causa }}"
+                                data-siniestro="{{ r.siniestro }}"
+                                data-motivo="{{ r.motivo_delito }}"
+                                data-parte="{{ r.parte }}"
+                                data-rotulado="{{ r.rotulado }}"
+                                data-asegurado="{{ r.asegurado }}"
+                                data-rut="{{ r.rut }}"
+                                data-ultimosin="{{ r.ultimo_siniestro_sisgen }}"
+                                data-fechasisgen="{{ r.fecha_siniestro_sisgen_iso }}"
+                                data-cia="{{ r.cia }}"
+                                data-observaciones="{{ r.observaciones }}">
+                            Editar
+                        </button>
+                    </td>
+                    <td class="fw-bold text-nowrap">{{ r.siniestro }}</td>
+                    <td>
+                        <span class="badge bg-info text-dark">{{ r.motivo_delito|default:"-" }}</span>
+                    </td>
+                    <td>
+                        <div class="fw-semibold text-truncate" style="max-width: 240px;" title="{{ r.rotulado }}">
+                            {{ r.rotulado|default:"-" }}
+                        </div>
+                    </td>
+                    <td>{{ r.asegurado|default:"-" }}</td>
+                    <td class="text-nowrap fw-semibold">{{ r.rut|default:"-" }}</td>
+                    <td class="text-nowrap">{{ r.ultimo_siniestro_sisgen|default:"-" }}</td>
+                    <td class="text-center text-nowrap">{{ r.fecha_siniestro_sisgen }}</td>
+                    <td>
+                        {% if r.cia %}
+                            <span class="badge bg-dark">{{ r.cia }}</span>
+                        {% else %}
+                            <span class="text-muted">-</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="text-truncate" style="max-width: 220px;" title="{{ r.observaciones }}">
+                            {{ r.observaciones|default:"-" }}
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- MODAL CREAR / EDITAR QUERELLAS VS SISGEN -->
+<div class="modal fade" id="modalQuerellaSisgen" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <form method="POST" id="formQuerellaSisgen" class="modal-content">
+            {% csrf_token %}
+            <input type="hidden" name="accion" id="inputAccionSisgen" value="crear_querella_sisgen">
+            <input type="hidden" name="fila_excel" id="inputFilaSisgen" value="">
+            <div class="modal-header bg-dark text-white py-2">
+                <h5 class="modal-title fw-bold" id="tituloModalSisgen">Nuevo Registro - QUERELLAS VS SISGEN</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row g-2">
+                    <div class="col-md-4">
+                        <label class="form-label small fw-bold mb-1">Siniestro (Col B) *</label>
+                        <input type="text" name="siniestro" id="sis_siniestro" class="form-control form-control-sm" required>
+                    </div>
+                    <div class="col-md-5">
+                        <label class="form-label small fw-bold mb-1">Motivo - Delito (Col C)</label>
+                        <input type="text" name="motivo_delito" id="sis_motivo" class="form-control form-control-sm" list="dlMotivosSisgen">
+                        <datalist id="dlMotivosSisgen">
+                            {% for m in motivos_sisgen %}<option value="{{ m }}">{% endfor %}
+                        </datalist>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small fw-bold mb-1">Parte (Col D)</label>
+                        <select name="parte" id="sis_parte" class="form-select form-select-sm">
+                            {% for p in partes_legal %}
+                                <option value="{{ p }}">{{ p }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label small fw-bold mb-1">ROTULADO (Col E)</label>
+                        <input type="text" name="rotulado" id="sis_rotulado" class="form-control form-control-sm">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-bold mb-1">Nombre Asegurado (Col F)</label>
+                        <input type="text" name="asegurado" id="sis_asegurado" class="form-control form-control-sm">
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="form-label small fw-bold mb-1">RUT (Col G)</label>
+                        <input type="text" name="rut" id="sis_rut" class="form-control form-control-sm" placeholder="Ej: 12.345.678-9">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small fw-bold mb-1">Último Siniestro SISGEN (Col H)</label>
+                        <input type="text" name="ultimo_siniestro_sisgen" id="sis_ultimosin" class="form-control form-control-sm">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small fw-bold mb-1">Fecha Siniestro SISGEN (Col I)</label>
+                        <input type="date" name="fecha_siniestro_sisgen" id="sis_fechasisgen" class="form-control form-control-sm">
+                    </div>
+
+                    <div class="col-md-5">
+                        <label class="form-label small fw-bold mb-1">Cía (Col J)</label>
+                        <input type="text" name="cia" id="sis_cia" class="form-control form-control-sm" list="dlCiasSisgen">
+                        <datalist id="dlCiasSisgen">
+                            {% for c in cias_sisgen %}<option value="{{ c }}">{% endfor %}
+                        </datalist>
+                    </div>
+                    <div class="col-md-7">
+                        <label class="form-label small fw-bold mb-1">Observaciones (Col K)</label>
+                        <input type="text" name="observaciones" id="sis_observaciones" class="form-control form-control-sm">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer py-2">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" class="btn btn-primary btn-sm fw-bold">Guardar en Vivo en Excel</button>
+            </div>
+        </form>
+    </div>
+</div>

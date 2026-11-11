@@ -716,3 +716,149 @@ def guardar_reporte_bimestral_estudio(ruta_archivo, post_data):
         return fila_rep
     finally:
         wb.close()
+
+# Añadir al final de core/services_legal.py
+
+def leer_hoja_querellas_sisgen(ruta_archivo, nombre_hoja):
+    """
+    Lee la hoja 'QUERELLAS VS SISGEN' extrayendo las 9 columnas con encabezado en texto amarillo:
+    Siniestro (B), Motivo - Delito (C), ROTULADO (E), Nombre Asegurado (F),
+    RUT (G), Ultimo siniestro SISGEN (H), Fecha siniestro SISGEN (I), Cía (J) y Observaciones (K).
+    """
+    wb = openpyxl.load_workbook(ruta_archivo, data_only=True)
+    try:
+        catalogos = cargar_catalogos_hojas_auxiliares(wb)
+        ws = wb[nombre_hoja]
+
+        registros = []
+        conteo_siniestros = {}
+        motivos_set = set(catalogos.get("motivos_legal", []))
+        cias_set = set()
+
+        for fila_idx in range(2, ws.max_row + 1):
+            siniestro_raw = _limpiar_str(ws.cell(fila_idx, 2).value).replace(".0", "")
+            motivo_delito = _limpiar_str(ws.cell(fila_idx, 3).value)
+            rotulado = _limpiar_str(ws.cell(fila_idx, 5).value)
+            asegurado = _limpiar_str(ws.cell(fila_idx, 6).value)
+
+            if not any([siniestro_raw, motivo_delito, rotulado, asegurado]):
+                continue
+
+            key_sin = "SIN SINIESTRO" if siniestro_raw.upper() == "NO" else siniestro_raw
+            conteo_siniestros[key_sin] = conteo_siniestros.get(key_sin, 0) + 1
+            id_calculado = f"{key_sin}-{conteo_siniestros[key_sin]}" if key_sin else f"FILA-{fila_idx}"
+            id_celda = _limpiar_str(ws.cell(fila_idx, 1).value) or id_calculado
+
+            parte = _limpiar_str(ws.cell(fila_idx, 4).value)
+            rut = _limpiar_str(ws.cell(fila_idx, 7).value)
+            ultimo_sin_sisgen = _limpiar_str(ws.cell(fila_idx, 8).value).replace(".0", "")
+            f_sisgen = _parsear_fecha(ws.cell(fila_idx, 9).value)
+            cia = _limpiar_str(ws.cell(fila_idx, 10).value)
+            observaciones = _limpiar_str(ws.cell(fila_idx, 11).value)
+
+            tiene_cruce_sisgen = "SI" if any([rut, ultimo_sin_sisgen, f_sisgen, cia]) else "NO"
+
+            if motivo_delito:
+                motivos_set.add(motivo_delito)
+            if cia:
+                cias_set.add(cia)
+
+            registros.append({
+                "fila_excel": fila_idx,
+                "id_causa": id_celda,
+                "siniestro": siniestro_raw,
+                "motivo_delito": motivo_delito,
+                "parte": parte,
+                "rotulado": rotulado,
+                "asegurado": asegurado,
+                "rut": rut,
+                "ultimo_siniestro_sisgen": ultimo_sin_sisgen,
+                "fecha_siniestro_sisgen": _formatear_fecha_vista(f_sisgen),
+                "fecha_siniestro_sisgen_iso": _formatear_fecha_iso(f_sisgen),
+                "cia": cia,
+                "observaciones": observaciones,
+                "tiene_cruce_sisgen": tiene_cruce_sisgen,
+            })
+
+        catalogos["motivos_sisgen"] = sorted(motivos_set)
+        catalogos["cias_sisgen"] = sorted(cias_set)
+        return registros, catalogos
+    finally:
+        wb.close()
+
+
+def construir_contexto_querellas_sisgen(registros, catalogos):
+    """Construye los KPIs y listas desplegables para la interfaz de QUERELLAS VS SISGEN."""
+    total_registros = len(registros)
+    con_sisgen = sum(1 for r in registros if r["tiene_cruce_sisgen"] == "SI")
+    sin_sisgen = total_registros - con_sisgen
+
+    conteo_cias = {}
+    for r in registros:
+        if r["cia"]:
+            conteo_cias[r["cia"]] = conteo_cias.get(r["cia"], 0) + 1
+    top_cia = max(conteo_cias.items(), key=lambda x: x[1])[0] if conteo_cias else "Sin registros"
+
+    return {
+        "datos_cargados": True,
+        "es_hoja_querellas_sisgen": True,
+        "registros_sisgen": list(reversed(registros)),
+        "kpi_sisgen_total": total_registros,
+        "kpi_sisgen_con_cruce": con_sisgen,
+        "kpi_sisgen_sin_cruce": sin_sisgen,
+        "kpi_sisgen_top_cia": top_cia,
+        "motivos_sisgen": catalogos.get("motivos_sisgen", []),
+        "cias_sisgen": catalogos.get("cias_sisgen", []),
+        "partes_legal": catalogos.get("partes_legal", ["Querellante", "Demandado", "Recupero", "RC No Aplica", "Querellado"]),
+    }
+
+
+def guardar_fila_querellas_sisgen(ruta_archivo, nombre_hoja, fila_destino, post_data, es_nuevo=False):
+    """Crea o edita en vivo un registro en la hoja 'QUERELLAS VS SISGEN' preservando la tabla Controvertidos5."""
+    wb = openpyxl.load_workbook(ruta_archivo)
+    try:
+        ws = wb[nombre_hoja]
+        if es_nuevo:
+            fila_destino = ws.max_row + 1
+            while fila_destino > 2 and not any(ws.cell(fila_destino - 1, c).value for c in (2, 3, 5, 6)):
+                fila_destino -= 1
+
+        siniestro = _limpiar_str(post_data.get("siniestro")) or "NO"
+        f_sisgen_str = _limpiar_str(post_data.get("fecha_siniestro_sisgen"))
+        try:
+            f_sisgen_dt = datetime.strptime(f_sisgen_str, "%Y-%m-%d") if f_sisgen_str else None
+        except ValueError:
+            f_sisgen_dt = None
+
+        ult_sin_raw = _limpiar_str(post_data.get("ultimo_siniestro_sisgen"))
+        ult_sin_val = int(ult_sin_raw) if ult_sin_raw.isdigit() else (ult_sin_raw or None)
+
+        # Fórmula nativa para Columna A (ID)
+        nombre_tabla = next(iter(ws.tables.keys()), "Controvertidos5")
+        ws.cell(
+            fila_destino, 1,
+            f'=IF({nombre_tabla}[[#This Row],[Siniestro]]="","",IF(TRIM({nombre_tabla}[[#This Row],[Siniestro]])="NO","SIN SINIESTRO",{nombre_tabla}[[#This Row],[Siniestro]])&"-"&COUNTIF(INDEX({nombre_tabla}[Siniestro],1):{nombre_tabla}[[#This Row],[Siniestro]],{nombre_tabla}[[#This Row],[Siniestro]]))'
+        )
+
+        # Columnas en texto amarillo (B, C, E, F, G, H, I, J, K) + Parte (D)
+        ws.cell(fila_destino, 2, siniestro)
+        ws.cell(fila_destino, 3, _limpiar_str(post_data.get("motivo_delito")) or None)
+        ws.cell(fila_destino, 4, _limpiar_str(post_data.get("parte")) or ws.cell(fila_destino, 4).value or "Querellante")
+        ws.cell(fila_destino, 5, _limpiar_str(post_data.get("rotulado")) or None)
+        ws.cell(fila_destino, 6, _limpiar_str(post_data.get("asegurado")) or None)
+        ws.cell(fila_destino, 7, _limpiar_str(post_data.get("rut")) or None)
+        ws.cell(fila_destino, 8, ult_sin_val)
+        ws.cell(fila_destino, 9, f_sisgen_dt)
+        if f_sisgen_dt:
+            ws.cell(fila_destino, 9).number_format = "dd-mm-yyyy"
+        ws.cell(fila_destino, 10, _limpiar_str(post_data.get("cia")) or None)
+        ws.cell(fila_destino, 11, _limpiar_str(post_data.get("observaciones")) or None)
+
+        if nombre_tabla in ws.tables:
+            max_fila_tabla = max(ws.max_row, fila_destino)
+            ws.tables[nombre_tabla].ref = f"A1:K{max_fila_tabla}"
+
+        wb.save(ruta_archivo)
+        return fila_destino
+    finally:
+        wb.close()

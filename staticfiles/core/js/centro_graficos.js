@@ -34,18 +34,30 @@ function contarAgrupado(lista, claveGrupo, modoMetrica) {
     return resultado;
 }
 
-function actualizarFiltroRamosGrafico() {
-    const todosChecks = document.querySelectorAll('.check-ramo-grafico');
+function toggleTodosAniosGrafico(chkTodos) {
+    document.querySelectorAll('.check-anio-grafico').forEach(chk => {
+        chk.checked = chkTodos.checked;
+    });
+    actualizarFiltroAniosGrafico();
+}
+
+function actualizarFiltroAniosGrafico() {
+    const todosChecks = document.querySelectorAll('.check-anio-grafico');
     const seleccionados = Array.from(todosChecks)
         .filter(chk => chk.checked)
-        .map(chk => chk.value === 'SIN_RAMO' ? 'Sin Ramo' : chk.value);
+        .map(chk => chk.value);
 
-    const btn = document.getElementById('btnDropdownRamos');
+    const chkTodos = document.getElementById('chk_g_anio_todos');
+    if (chkTodos) {
+        chkTodos.checked = (todosChecks.length > 0 && seleccionados.length === todosChecks.length);
+    }
+
+    const btn = document.getElementById('btnDropdownAnios');
     if (btn) {
         if (seleccionados.length === todosChecks.length) {
-            btn.textContent = 'Todos seleccionados';
+            btn.textContent = 'Todos los años';
         } else if (seleccionados.length === 0) {
-            btn.textContent = 'Ningún ramo';
+            btn.textContent = 'Ningún año';
         } else {
             btn.textContent = seleccionados.join(', ');
         }
@@ -59,8 +71,10 @@ function renderizarGraficoAvanzado() {
 
     const tipoReporte = document.getElementById('g_tipo_reporte').value;
     const selectMetrica = document.getElementById('g_metrica');
-    const anioFiltro = document.getElementById('g_anio').value;
     const anomFiltro = document.getElementById('g_anomalia').value;
+
+    const aniosSeleccionados = Array.from(document.querySelectorAll('.check-anio-grafico:checked'))
+        .map(chk => chk.value);
     const ramosSeleccionados = Array.from(document.querySelectorAll('.check-ramo-grafico:checked'))
         .map(chk => chk.value);
 
@@ -71,7 +85,7 @@ function renderizarGraficoAvanzado() {
     }
 
     const filtrados = datosAnalytics.filter(d => {
-        const okAnio = (anioFiltro === 'TODOS') || (d.anio === anioFiltro);
+        const okAnio = aniosSeleccionados.includes(d.anio);
         const okRamo = ramosSeleccionados.includes(d.ramo);
         const okAnom = (anomFiltro === 'TODOS') || (d.anomalia === anomFiltro);
         return okAnio && okRamo && okAnom;
@@ -85,7 +99,7 @@ function renderizarGraficoAvanzado() {
     let labels = [];
     let valores = [];
     let indexAxis = 'x';
-    let colores = 'rgba(215, 0, 42, 0.8)';
+    let colores = 'rgba(162, 6, 32, 0.9)';
     let titulo = '';
 
     if (tipoReporte === 'motivos') {
@@ -103,8 +117,8 @@ function renderizarGraficoAvanzado() {
         titulo = 'Evolución Mensual de Reclamos (Ene - Dic)';
     } else if (tipoReporte === 'evolucion_anual') {
         const conteo = contarAgrupado(filtrados, 'anio', modoMetrica);
-        labels = Object.keys(conteo).filter(a => a !== '').sort();
-        valores = labels.map(a => conteo[a]);
+        labels = aniosSeleccionados.slice().sort();
+        valores = labels.map(a => conteo[a] || 0);
         titulo = 'Comparativa de Reclamos por Año CMF';
     } else if (tipoReporte === 'sla_demora') {
         const validosSla = filtrados.filter(d => d.rango_demora && d.rango_demora !== '-');
@@ -117,7 +131,6 @@ function renderizarGraficoAvanzado() {
         const conteo = contarAgrupado(filtrados, 'estado', modoMetrica);
         const valoresBrutos = Object.values(conteo);
         const totalMuestra = valoresBrutos.reduce((acc, v) => acc + v, 0);
-
         labels = Object.keys(conteo).map((estado, idx) => {
             const pct = totalMuestra > 0 ? ((valoresBrutos[idx] / totalMuestra) * 100).toFixed(1) : '0.0';
             return `${estado} (${pct}%)`;

@@ -48,36 +48,99 @@
     <div class="card-header bg-white py-2 d-flex flex-wrap justify-content-between align-items-center gap-2">
         <div class="btn-group btn-group-sm" role="group">
             <input type="radio" class="btn-check" name="radioBloqueLegal" id="radBloqueTodos" value="TODOS" checked onchange="aplicarFiltrosCausas()">
-            <label class="btn btn-outline-dark fw-bold" for="radBloqueTodos">Todas las Áreas</label>
+            <label class="btn btn-outline-dark fw-bold" for="radBloqueTodos">Todas las áreas</label>
 
             <input type="radio" class="btn-check" name="radioBloqueLegal" id="radBloqueCivil" value="CIVIL" onchange="aplicarFiltrosCausas()">
-            <label class="btn btn-outline-dark fw-bold" for="radBloqueCivil">🏛️ Bloque Civil (Civil / JPL / Arb / Rec)</label>
+            <label class="btn btn-outline-dark fw-bold" for="radBloqueCivil">Bloque Civil (Civil / JPL / Arb / Rec)</label>
 
             <input type="radio" class="btn-check" name="radioBloqueLegal" id="radBloquePenal" value="PENAL" onchange="aplicarFiltrosCausas()">
-            <label class="btn btn-outline-dark fw-bold" for="radBloquePenal">⚖️ Bloque Penal</label>
+            <label class="btn btn-outline-dark fw-bold" for="radBloquePenal">Bloque Penal</label>
         </div>
 
         <div class="d-flex flex-wrap align-items-center gap-2">
-            <select id="filtroLegalCompetencia" class="form-select form-select-sm" style="width: 140px;" onchange="aplicarFiltrosCausas()">
-                <option value="TODOS">Competencia (Todas)</option>
-                {% for comp in competencias_legal %}
-                    <option value="{{ comp }}">{{ comp }}</option>
-                {% endfor %}
-            </select>
+            <!-- Dropdown Multi-Check: Competencia -->
+            <div class="dropdown">
+                <button class="form-select form-select-sm text-start text-truncate" type="button"
+                        id="btnDropCompLegal" style="width: 170px;"
+                        data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
+                    Competencia (Todas)
+                </button>
+                <div class="dropdown-menu p-2 shadow-sm" style="min-width: 210px; max-height: 280px; overflow-y: auto;" aria-labelledby="btnDropCompLegal">
+                    <div class="form-check border-bottom pb-1 mb-1">
+                        <input class="form-check-input" type="checkbox" id="chk_leg_comp_todos" checked
+                               onchange="toggleTodosChecksFiltroLegal('comp', this.checked)">
+                        <label class="form-check-label small fw-bold w-100" for="chk_leg_comp_todos">
+                            Todas las competencias
+                        </label>
+                    </div>
+                    {% for comp in competencias_legal %}
+                        <div class="form-check mb-1">
+                            <input class="form-check-input check-legal-comp" type="checkbox"
+                                   value="{{ comp }}" id="chk_leg_comp_{{ forloop.counter }}" checked
+                                   onchange="actualizarDropdownFiltroLegal('comp')">
+                            <label class="form-check-label small w-100" for="chk_leg_comp_{{ forloop.counter }}">
+                                {{ comp }}
+                            </label>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
 
-            <select id="filtroLegalEstudio" class="form-select form-select-sm" style="width: 210px;" onchange="aplicarFiltrosCausas()">
-                <option value="TODOS">Estudio Jurídico (Todos)</option>
-                {% for est in estudios_catalogo %}
-                    <option value="{{ est }}">{{ est }}</option>
-                {% endfor %}
-            </select>
+            <!-- Dropdown Multi-Check: Estudio Jurídico -->
+            <div class="dropdown">
+                <button class="form-select form-select-sm text-start text-truncate" type="button"
+                        id="btnDropEstudioLegal" style="width: 220px;"
+                        data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
+                    Estudio Jurídico (Todos)
+                </button>
+                <div class="dropdown-menu p-2 shadow-sm" style="min-width: 280px; max-height: 300px; overflow-y: auto;" aria-labelledby="btnDropEstudioLegal">
+                    <div class="form-check border-bottom pb-1 mb-1">
+                        <input class="form-check-input" type="checkbox" id="chk_leg_estudio_todos" checked
+                               onchange="toggleTodosChecksFiltroLegal('estudio', this.checked)">
+                        <label class="form-check-label small fw-bold w-100" for="chk_leg_estudio_todos">
+                            Todos los estudios
+                        </label>
+                    </div>
+                    {% for est in estudios_catalogo %}
+                        <div class="form-check mb-1">
+                            <input class="form-check-input check-legal-estudio" type="checkbox"
+                                   value="{{ est }}" id="chk_leg_est_{{ forloop.counter }}" checked
+                                   onchange="actualizarDropdownFiltroLegal('estudio')">
+                            <label class="form-check-label small w-100" for="chk_leg_est_{{ forloop.counter }}">
+                                {{ est }}
+                            </label>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
 
-            <select id="filtroLegalEstado" class="form-select form-select-sm" style="width: 135px;" onchange="aplicarFiltrosCausas()">
-                <option value="TODOS">Estado (Todos)</option>
-                {% for est_c in estados_legal %}
-                    <option value="{{ est_c }}">{{ est_c }}</option>
-                {% endfor %}
-            </select>
+            <!-- Dropdown Multi-Check: Estado -->
+            <div class="dropdown">
+                <button class="form-select form-select-sm text-start text-truncate" type="button"
+                        id="btnDropEstadoLegal" style="width: 155px;"
+                        data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
+                    Estado (Todos)
+                </button>
+                <div class="dropdown-menu p-2 shadow-sm" style="min-width: 190px; max-height: 260px; overflow-y: auto;" aria-labelledby="btnDropEstadoLegal">
+                    <div class="form-check border-bottom pb-1 mb-1">
+                        <input class="form-check-input" type="checkbox" id="chk_leg_estado_todos" checked
+                               onchange="toggleTodosChecksFiltroLegal('estado', this.checked)">
+                        <label class="form-check-label small fw-bold w-100" for="chk_leg_estado_todos">
+                            Todos los estados
+                        </label>
+                    </div>
+                    {% for est_c in estados_legal %}
+                        <div class="form-check mb-1">
+                            <input class="form-check-input check-legal-estado" type="checkbox"
+                                   value="{{ est_c }}" id="chk_leg_estado_{{ forloop.counter }}" checked
+                                   onchange="actualizarDropdownFiltroLegal('estado')">
+                            <label class="form-check-label small w-100" for="chk_leg_estado_{{ forloop.counter }}">
+                                {{ est_c }}
+                            </label>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
 
             <input type="text" id="buscadorCausasLegales" class="form-control form-control-sm"
                    style="width: 210px;" placeholder="Buscar siniestro, RUC, RIT, nombre..."

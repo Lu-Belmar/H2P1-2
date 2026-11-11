@@ -28,15 +28,35 @@
                 </select>
             </div>
 
-            <!-- COL 3 AÑO CMF (REVISAR) -->
+           <!-- COL 3 AÑO CMF (MULTI-SELECCIÓN) -->
             <div class="col-md-2">
                 <label class="form-label small fw-bold mb-1">Año CMF</label>
-                <select id="g_anio" class="form-select form-select-sm" onchange="renderizarGraficoAvanzado()">
-                    <option value="TODOS">Todos los años</option>
-                    {% for a in anios_disponibles %}
-                        <option value="{{ a }}">{{ a }}</option>
-                    {% endfor %}
-                </select>
+                <div class="dropdown">
+                    <button class="form-select form-select-sm text-start text-truncate" type="button"
+                            id="btnDropdownAnios" data-bs-toggle="dropdown" data-bs-auto-close="outside"
+                            aria-expanded="false">
+                        Todos los años
+                    </button>
+                    <div class="dropdown-menu p-2 shadow-sm w-100" aria-labelledby="btnDropdownAnios">
+                        <div class="form-check border-bottom pb-1 mb-1">
+                            <input class="form-check-input" type="checkbox" id="chk_g_anio_todos" checked
+                                   onchange="toggleTodosAniosGrafico(this)">
+                            <label class="form-check-label small fw-bold w-100" for="chk_g_anio_todos">
+                                Todos los años
+                            </label>
+                        </div>
+                        {% for a in anios_disponibles %}
+                            <div class="form-check mb-1">
+                                <input class="form-check-input check-anio-grafico" type="checkbox"
+                                       value="{{ a }}" id="chk_g_anio_{{ a }}" checked
+                                       onchange="actualizarFiltroAniosGrafico()">
+                                <label class="form-check-label small fw-semibold w-100" for="chk_g_anio_{{ a }}">
+                                    {{ a }}
+                                </label>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
             </div>
 
             <!-- COL 4 CHECKLIST -->

@@ -108,73 +108,98 @@ def guardar_fila_consolidado(ruta_archivo, nombre_hoja, fila_excel, datos_form, 
     return fila_excel
 
 
+# core/services.py (reemplazar leer_hoja_consolidado y construir_contexto_consolidado)
+
 def leer_hoja_consolidado(ruta_archivo, nombre_hoja):
     """Lee 'Tabla consolidado' y normaliza automáticamente Ramo, Estado y Anomalía."""
     wb = openpyxl.load_workbook(ruta_archivo, data_only=True)
-    ws = wb[nombre_hoja]
+    try:
+        ws = wb[nombre_hoja]
 
-    registros = []
-    for r in range(2, ws.max_row + 1):
-        nombre = ws.cell(r, 1).value
-        n_oficio = ws.cell(r, 2).value
-        n_siniestro = ws.cell(r, 3).value
+        # Detectar columnas opcionales en la fila 1 (Liquidador, Taller, Reclamante)
+        mapa_headers = {}
+        for col_idx in range(1, ws.max_column + 1):
+            val_h = str(ws.cell(1, col_idx).value or "").strip().lower()
+            if val_h:
+                mapa_headers[val_h] = col_idx
 
-        if nombre is None and n_oficio is None and n_siniestro is None:
-            continue
+        col_liq = next(
+            (idx for nombre_col, idx in mapa_headers.items() if "liquidador" in nombre_col or "taller" in nombre_col),
+            22,  # Columna V por defecto si existe
+        )
 
-        f_siniestro = parsear_fecha(ws.cell(r, 4).value)
-        f_cmf = parsear_fecha(ws.cell(r, 5).value)
-        f_limite = parsear_fecha(ws.cell(r, 8).value)
-        f_fid = parsear_fecha(ws.cell(r, 9).value)
+        registros = []
+        for r in range(2, ws.max_row + 1):
+            nombre = ws.cell(r, 1).value
+            n_oficio = ws.cell(r, 2).value
+            n_siniestro = ws.cell(r, 3).value
 
-        mes_cmf = MESES_ES.get(f_cmf.month, "") if f_cmf else (ws.cell(r, 6).value or "")
-        anio_cmf = f_cmf.year if f_cmf else (ws.cell(r, 7).value or "")
-        mes_fid = MESES_ES.get(f_fid.month, "-") if f_fid else "-"
-        anio_fid = f_fid.year if f_fid else "-"
+            if nombre is None and n_oficio is None and n_siniestro is None:
+                continue
 
-        dias_cmf_vs_fid = (f_fid - f_cmf).days if (f_fid and f_cmf) else None
-        dias_demora = (f_fid - f_limite).days if (f_fid and f_limite) else None
+            f_siniestro = parsear_fecha(ws.cell(r, 4).value)
+            f_cmf = parsear_fecha(ws.cell(r, 5).value)
+            f_limite = parsear_fecha(ws.cell(r, 8).value)
+            f_fid = parsear_fecha(ws.cell(r, 9).value)
 
-        observaciones_str = str(ws.cell(r, 21).value or "").strip()
+            mes_cmf = MESES_ES.get(f_cmf.month, "") if f_cmf else (ws.cell(r, 6).value or "")
+            anio_cmf = f_cmf.year if f_cmf else (ws.cell(r, 7).value or "")
+            mes_fid = MESES_ES.get(f_fid.month, "-") if f_fid else "-"
+            anio_fid = f_fid.year if f_fid else ""
 
-        registros.append({
-            "fila_excel": r,
-            "nombre": str(nombre or "").strip(),
-            "n_oficio": "" if n_oficio is None else str(n_oficio).replace(".0", ""),
-            "n_siniestro": "" if n_siniestro is None else str(n_siniestro).replace(".0", ""),
-            "fecha_siniestro": f_siniestro.strftime("%d-%m-%Y") if f_siniestro else "-",
-            "fecha_siniestro_iso": f_siniestro.strftime("%Y-%m-%d") if f_siniestro else "",
-            "fecha_cmf": f_cmf.strftime("%d-%m-%Y") if f_cmf else "-",
-            "fecha_cmf_iso": f_cmf.strftime("%Y-%m-%d") if f_cmf else "",
-            "mes_cmf": mes_cmf,
-            "anio_cmf": anio_cmf,
-            "fecha_limite": f_limite.strftime("%d-%m-%Y") if f_limite else "-",
-            "fecha_limite_iso": f_limite.strftime("%Y-%m-%d") if f_limite else "",
-            "fecha_fid": f_fid.strftime("%d-%m-%Y") if f_fid else "-",
-            "fecha_fid_iso": f_fid.strftime("%Y-%m-%d") if f_fid else "",
-            "mes_fid": mes_fid,
-            "anio_fid": anio_fid,
-            "dias_cmf_vs_fid": "-" if dias_cmf_vs_fid is None else dias_cmf_vs_fid,
-            "dias_demora": "-" if dias_demora is None else dias_demora,
-            "rango_demora": calcular_rango_demora(dias_demora),
-            "motivo": str(ws.cell(r, 15).value or "").strip(),
-            "respuesta": str(ws.cell(r, 16).value or "").strip(),
-            "estado": normalizar_estado(ws.cell(r, 17).value),
-            "ramo": normalizar_ramo(ws.cell(r, 18).value),
-            "dda": str(ws.cell(r, 19).value or "").strip(),
-            "zendesk": str(ws.cell(r, 20).value or "").strip(),
-            "observaciones": observaciones_str,
-            "tiene_anomalia": "SI" if contiene_anomalia(observaciones_str) else "NO",
-            "legal": str(ws.cell(r, 25).value or "").strip(),
-        })
+            dias_cmf_vs_fid = (f_fid - f_cmf).days if (f_fid and f_cmf) else None
+            dias_demora = (f_fid - f_limite).days if (f_fid and f_limite) else None
 
-    return registros
+            observaciones_str = str(ws.cell(r, 21).value or "").strip()
+            nombre_str = str(nombre or "").strip()
+            liq_str = str(ws.cell(r, col_liq).value or "").strip() if col_liq <= ws.max_column else ""
+            legal_str = str(ws.cell(r, 25).value or "").strip() if ws.max_column >= 25 else ""
+
+            registros.append({
+                "fila_excel": r,
+                "nombre": nombre_str,
+                "reclamante": nombre_str,
+                "asegurado": nombre_str,
+                "liquidador": liq_str,
+                "liquidador_taller": liq_str,
+                "n_oficio": "" if n_oficio is None else str(n_oficio).replace(".0", ""),
+                "n_siniestro": "" if n_siniestro is None else str(n_siniestro).replace(".0", ""),
+                "fecha_siniestro": f_siniestro.strftime("%d-%m-%Y") if f_siniestro else "-",
+                "fecha_siniestro_iso": f_siniestro.strftime("%Y-%m-%d") if f_siniestro else "",
+                "fecha_cmf": f_cmf.strftime("%d-%m-%Y") if f_cmf else "-",
+                "fecha_cmf_iso": f_cmf.strftime("%Y-%m-%d") if f_cmf else "",
+                "mes_cmf": mes_cmf,
+                "anio_cmf": anio_cmf,
+                "fecha_limite": f_limite.strftime("%d-%m-%Y") if f_limite else "-",
+                "fecha_limite_iso": f_limite.strftime("%Y-%m-%d") if f_limite else "",
+                "fecha_fid": f_fid.strftime("%d-%m-%Y") if f_fid else "-",
+                "fecha_fid_iso": f_fid.strftime("%Y-%m-%d") if f_fid else "",
+                "mes_fid": mes_fid,
+                "anio_fid": anio_fid,
+                "dias_cmf_vs_fid": "-" if dias_cmf_vs_fid is None else dias_cmf_vs_fid,
+                "dias_demora": "-" if dias_demora is None else dias_demora,
+                "dias_demora_num": dias_demora or 0,
+                "rango_demora": calcular_rango_demora(dias_demora),
+                "motivo": str(ws.cell(r, 15).value or "").strip(),
+                "respuesta": str(ws.cell(r, 16).value or "").strip(),
+                "estado": normalizar_estado(ws.cell(r, 17).value),
+                "ramo": normalizar_ramo(ws.cell(r, 18).value),
+                "dda": str(ws.cell(r, 19).value or "").strip(),
+                "zendesk": str(ws.cell(r, 20).value or "").strip(),
+                "observaciones": observaciones_str,
+                "tiene_anomalia": "SI" if contiene_anomalia(observaciones_str) else "NO",
+                "legal": legal_str,
+            })
+        return registros
+    finally:
+        wb.close()
 
 
 def construir_contexto_consolidado(registros):
     """Prepara KPIs, series de gráficos y dataset analítico para la plantilla."""
     tiempos = [r["dias_cmf_vs_fid"] for r in registros if isinstance(r["dias_cmf_vs_fid"], int)]
     promedio_dias = round(sum(tiempos) / len(tiempos), 1) if tiempos else 0
+    total_anomalias = sum(1 for r in registros if r["tiene_anomalia"] == "SI")
 
     conteo_estados = {}
     for r in registros:
@@ -200,21 +225,22 @@ def construir_contexto_consolidado(registros):
         for r in registros
     ]
 
-    # 1. Liquidador / Taller más mencionado
     top_liq_taller_nombre, top_liq_taller_cant = _obtener_top_frecuencia(
         registros,
-        ["liquidador_taller", "liquidador", "taller", "liquidador_o_taller", "nombre_liquidador"],
+        ["liquidador_taller", "liquidador", "taller", "dda"],
     )
 
-    # 2. Quien presentó la mayor cantidad de reclamos (Reclamante / Asegurado / Origen)
     top_reclamante_nombre, top_reclamante_cant = _obtener_top_frecuencia(
         registros,
-        ["reclamante", "asegurado", "nombre_reclamante", "nombre_asegurado", "presentado_por", "corredor"],
+        ["reclamante", "asegurado", "nombre"],
     )
+
     return {
         "datos_cargados": True,
         "registros": list(reversed(registros)),
         "total_filas": len(registros),
+        "kpi_total_oficios": len(registros),
+        "kpi_anomalias": total_anomalias,
         "promedio_dias": promedio_dias,
         "nombre_col_num": "Reclamos por Estado/Calidad de Respuesta",
         "chart_labels": list(conteo_estados.keys()),

@@ -118,11 +118,15 @@
 
                 {% if es_hoja_consolidado %}
                     <button type="button" class="btn btn-sm btn-success fw-bold" onclick="abrirModalCrear()">
-                        ➕ Nuevo Oficio CMF
+                        Nuevo Oficio CMF
                     </button>
                 {% elif es_hoja_causas_legales %}
                     <button type="button" class="btn btn-sm btn-success fw-bold" onclick="abrirModalCausaCrear()">
-                        ➕ Nueva Causa Legal
+                        Nueva Causa Legal
+                    </button>
+                {% elif es_hoja_querellas_sisgen %}
+                    <button type="button" class="btn btn-sm btn-success fw-bold" onclick="abrirModalSisgenCrear()">
+                        Nuevo Registro SISGEN
                     </button>
                 {% endif %}
             </div>

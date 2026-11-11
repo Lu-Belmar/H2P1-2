@@ -27,12 +27,12 @@ function actualizarTopLiquidadorYReclamante() {
     const conteoReclamante = {};
 
     filasVisibles.forEach(fila => {
-        const liq = _extraerCampoFilaCmf(fila, ['liquidador', 'liqtaller', 'liquidadortaller', 'taller']);
+        const liq = _extraerCampoFilaCmf(fila, ['liquidador']);
         if (liq && !IGNORAR_VALORES_CMF.has(liq.toUpperCase())) {
             conteoLiquidador[liq] = (conteoLiquidador[liq] || 0) + 1;
         }
 
-        const rec = _extraerCampoFilaCmf(fila, ['reclamante', 'asegurado', 'nombrereclamante', 'corredor']);
+        const rec = _extraerCampoFilaCmf(fila, ['reclamante', 'asegurado']);
         if (rec && !IGNORAR_VALORES_CMF.has(rec.toUpperCase())) {
             conteoReclamante[rec] = (conteoReclamante[rec] || 0) + 1;
         }
@@ -58,22 +58,117 @@ function actualizarTopLiquidadorYReclamante() {
     }
 }
 
+const CONFIG_FILTROS_MULTI_CMF = {
+    anio: {
+        selector: '.check-cmf-anio',
+        chkTodosId: 'chk_cmf_anio_todos',
+        btnId: 'btnDropCmfAnio',
+        textoTodos: 'Año (Todos)',
+        textoNinguno: 'Sin año'
+    },
+    mes: {
+        selector: '.check-cmf-mes',
+        chkTodosId: 'chk_cmf_mes_todos',
+        btnId: 'btnDropCmfMes',
+        textoTodos: 'Mes (Todos)',
+        textoNinguno: 'Sin mes'
+    },
+    motivo: {
+        selector: '.check-cmf-motivo',
+        chkTodosId: 'chk_cmf_motivo_todos',
+        btnId: 'btnDropCmfMotivo',
+        textoTodos: 'Motivo (Todos)',
+        textoNinguno: 'Sin motivo'
+    },
+    estado: {
+        selector: '.check-cmf-estado',
+        chkTodosId: 'chk_cmf_estado_todos',
+        btnId: 'btnDropCmfEstado',
+        textoTodos: 'Estado (Todos)',
+        textoNinguno: 'Sin estado'
+    },
+    ramo: {
+        selector: '.check-cmf-ramo',
+        chkTodosId: 'chk_cmf_ramo_todos',
+        btnId: 'btnDropCmfRamo',
+        textoTodos: 'Ramo (Todos)',
+        textoNinguno: 'Sin ramo'
+    }
+};
+
+function toggleTodosChecksFiltroCmf(tipo, marcado) {
+    const cfg = CONFIG_FILTROS_MULTI_CMF[tipo];
+    if (!cfg) return;
+    document.querySelectorAll(cfg.selector).forEach(chk => {
+        chk.checked = marcado;
+    });
+    actualizarDropdownFiltroCmf(tipo);
+}
+
+function actualizarDropdownFiltroCmf(tipo, omitirAplicar = false) {
+    const cfg = CONFIG_FILTROS_MULTI_CMF[tipo];
+    if (!cfg) return;
+
+    const todos = document.querySelectorAll(cfg.selector);
+    const marcados = Array.from(todos).filter(c => c.checked).map(c => c.value);
+
+    const chkTodos = document.getElementById(cfg.chkTodosId);
+    if (chkTodos) {
+        chkTodos.checked = (todos.length > 0 && marcados.length === todos.length);
+    }
+
+    const btn = document.getElementById(cfg.btnId);
+    if (btn) {
+        if (marcados.length === todos.length) {
+            btn.textContent = cfg.textoTodos;
+        } else if (marcados.length === 0) {
+            btn.textContent = cfg.textoNinguno;
+        } else if (marcados.length === 1) {
+            btn.textContent = marcados[0];
+        } else {
+            btn.textContent = `${marcados.length} seleccionados`;
+        }
+    }
+
+    if (!omitirAplicar) {
+        aplicarFiltrosConsolidado();
+    }
+}
+
+function _cumpleMultiCheck(valorFila, checksNodeList) {
+    const totalChecks = checksNodeList.length;
+    if (totalChecks === 0) return true;
+    const seleccionados = Array.from(checksNodeList).filter(c => c.checked).map(c => c.value);
+    if (seleccionados.length === totalChecks) return true; // Si están todos marcados, incluye también vacíos/otros
+    return seleccionados.includes(valorFila);
+}
+
 function aplicarFiltrosConsolidado() {
-    const anioElegido = document.getElementById('filtroAnio').value;
-    const mesElegido = document.getElementById('filtroMes').value;
+    const tabla = document.getElementById('tablaConsolidado');
+    if (!tabla) return;
+
+    const checksAnio = document.querySelectorAll('.check-cmf-anio');
+    const checksMes = document.querySelectorAll('.check-cmf-mes');
+    const checksMotivo = document.querySelectorAll('.check-cmf-motivo');
+    const checksEstado = document.querySelectorAll('.check-cmf-estado');
+    const checksRamo = document.querySelectorAll('.check-cmf-ramo');
+
     const anomaliaElegida = document.getElementById('filtroAnomalia').value;
     const busqueda = document.getElementById('buscadorConsolidado').value.toLowerCase().trim();
 
-    const filas = document.querySelectorAll('#tablaConsolidado tbody tr');
+    const filas = tabla.querySelectorAll('tbody tr');
     let visibles = 0, anomaliasVisibles = 0;
 
     filas.forEach(fila => {
-        const okAnio = (anioElegido === 'TODOS') || (fila.dataset.anio === anioElegido);
-        const okMes = (mesElegido === 'TODOS') || (fila.dataset.mes === mesElegido);
+        const okAnio = _cumpleMultiCheck(fila.dataset.anio || '', checksAnio);
+        const okMes = _cumpleMultiCheck(fila.dataset.mes || '', checksMes);
+        const okMotivo = _cumpleMultiCheck(fila.dataset.motivo || '', checksMotivo);
+        const okEstado = _cumpleMultiCheck(fila.dataset.estado || '', checksEstado);
+        const okRamo = _cumpleMultiCheck(fila.dataset.ramo || '', checksRamo);
         const okAnom = (anomaliaElegida === 'TODOS') || (fila.dataset.anomalia === anomaliaElegida);
         const okTexto = (!busqueda) || fila.textContent.toLowerCase().includes(busqueda);
 
-        if (okAnio && okMes && okAnom && okTexto) {
+        if (okAnio && okMes && okMotivo && okEstado && okRamo && okAnom && okTexto) {
             fila.style.display = '';
             visibles++;
             if (fila.dataset.anomalia === 'SI') anomaliasVisibles++;
@@ -90,8 +185,11 @@ function aplicarFiltrosConsolidado() {
 }
 
 function limpiarFiltrosConsolidado() {
-    document.getElementById('filtroAnio').value = 'TODOS';
-    document.getElementById('filtroMes').value = 'TODOS';
+    Object.keys(CONFIG_FILTROS_MULTI_CMF).forEach(tipo => {
+        const cfg = CONFIG_FILTROS_MULTI_CMF[tipo];
+        document.querySelectorAll(cfg.selector).forEach(chk => chk.checked = true);
+        actualizarDropdownFiltroCmf(tipo, true);
+    });
     document.getElementById('filtroAnomalia').value = 'TODOS';
     document.getElementById('buscadorConsolidado').value = '';
     aplicarFiltrosConsolidado();
