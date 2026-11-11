@@ -1,4 +1,4 @@
-// core/static/core/js/3_centro_graficos.js
+// core/static/core/js/centro_graficos.js
 
 document.addEventListener('DOMContentLoaded', () => {
     inicializarCentroGraficos();
@@ -58,6 +58,25 @@ function actualizarFiltroAniosGrafico() {
             btn.textContent = 'Todos los años';
         } else if (seleccionados.length === 0) {
             btn.textContent = 'Ningún año';
+        } else {
+            btn.textContent = seleccionados.join(', ');
+        }
+    }
+    renderizarGraficoAvanzado();
+}
+
+function actualizarFiltroRamosGrafico() {
+    const todosChecks = document.querySelectorAll('.check-ramo-grafico');
+    const seleccionados = Array.from(todosChecks)
+        .filter(chk => chk.checked)
+        .map(chk => chk.value === 'SIN_RAMO' ? 'Sin Ramo' : chk.value);
+
+    const btn = document.getElementById('btnDropdownRamos');
+    if (btn) {
+        if (seleccionados.length === todosChecks.length) {
+            btn.textContent = 'Todos seleccionados';
+        } else if (seleccionados.length === 0) {
+            btn.textContent = 'Ningún ramo';
         } else {
             btn.textContent = seleccionados.join(', ');
         }
@@ -125,7 +144,7 @@ function renderizarGraficoAvanzado() {
         const conteo = contarAgrupado(validosSla, 'rango_demora', modoMetrica);
         labels = ORDEN_SLA;
         valores = ORDEN_SLA.map(s => conteo[s] || 0);
-        colores = ['#198754', '#20c997', '#ffc107', '#fd7e14', '#dc3545', '#842029'];
+        colores = ['#146c43', '#11845b', '#cc9a06', '#d35400', '#a71d2a', '#58151c'];
         titulo = 'Cumplimiento de Plazos (Rango de Demora)';
     } else if (tipoReporte === 'calidad_respuesta') {
         const conteo = contarAgrupado(filtrados, 'estado', modoMetrica);
@@ -137,7 +156,7 @@ function renderizarGraficoAvanzado() {
         });
         valores = valoresBrutos;
         chartType = 'doughnut';
-        colores = ['#198754', '#0d6efd', '#fd7e14', '#D7002A', '#6c757d'];
+        colores = ['#146c43', '#0b5ed7', '#d35400', '#a71d2a', '#495057'];
         titulo = 'Distribución por Estado / Calidad de Respuesta';
     } else if (tipoReporte === 'promedio_dias') {
         const sumaPorAnio = {};
@@ -150,7 +169,7 @@ function renderizarGraficoAvanzado() {
         });
         labels = Object.keys(sumaPorAnio).sort();
         valores = labels.map(a => +(sumaPorAnio[a].suma / sumaPorAnio[a].n).toFixed(1));
-        colores = 'rgba(30, 34, 41, 0.85)';
+        colores = 'rgba(30, 34, 41, 0.9)';
         titulo = 'Promedio de Días de Respuesta (CMF vs FID) por Año';
     }
 
@@ -175,7 +194,7 @@ function renderizarGraficoAvanzado() {
                     : (modoMetrica === 'oficios' ? 'Oficios Únicos' : 'Total Registros'),
                 data: valores,
                 backgroundColor: colores,
-                borderColor: chartType === 'line' ? '#D7002A' : (chartType === 'doughnut' ? '#FFFFFF' : undefined),
+                borderColor: chartType === 'line' ? '#A20620' : (chartType === 'doughnut' ? '#FFFFFF' : undefined),
                 borderWidth: chartType === 'doughnut' ? 2 : 1,
                 tension: 0.25,
                 fill: chartType === 'line'

@@ -1,16 +1,22 @@
 // core/static/core/js/legal/legal_modales_crud.js
 
-
 function abrirModalCausaCrear() {
-    document.getElementById('formCausaLegal').reset();
+    const form = document.getElementById('formCausaLegal');
+    if (form) form.reset();
+
     document.getElementById('inputAccionLegal').value = 'crear_causa_legal';
     document.getElementById('inputFilaLegal').value = '';
     document.getElementById('tituloModalCausaLegal').textContent = '➕ Crear Nueva Causa Legal';
-    document.getElementById('leg_check_hallazgo').checked = false;
-    new bootstrap.Modal(document.getElementById('modalCausaLegal')).show();
+
+    const chkHallazgo = document.getElementById('leg_check_hallazgo');
+    if (chkHallazgo) chkHallazgo.checked = false;
+
+    const modalEl = document.getElementById('modalCausaLegal');
+    if (modalEl) {
+        new bootstrap.Modal(modalEl).show();
+    }
 }
 
-// core/static/core/js/legal/legal_modales_crud.js
 function abrirModalCausaEditar(btn) {
     const d = btn.dataset;
     document.getElementById('inputAccionLegal').value = 'editar_causa_legal';
@@ -19,7 +25,7 @@ function abrirModalCausaEditar(btn) {
 
     const asignarValor = (id, val) => {
         const el = document.getElementById(id);
-        if (el) el.value = val || '';
+        if (el) el.value = val ?? '';
     };
 
     asignarValor('leg_siniestro', d.siniestro);

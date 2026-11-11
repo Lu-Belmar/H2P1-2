@@ -16,7 +16,6 @@ from .excel_cache import (
     obtener_contexto_cacheado,
     obtener_hojas_cacheadas,
 )
-
 from .constants import (
     ESTADOS_CATALOGO,
     LEGAL_CATALOGO,
@@ -42,7 +41,6 @@ from .services_legal import (
     registrar_nueva_audiencia,
 )
 
-
 logger = logging.getLogger(__name__)
 
 HOJAS_CONSOLIDADO = {"tabla consolidado", "consolidados", "consolidado"}
@@ -59,6 +57,7 @@ CATALOGOS_CONTEXTO = {
 
 
 def seleccionar_archivos_nativos(ruta_inicial=None):
+    """Abre el explorador nativo de Windows permitiendo elegir UNO o VARIOS archivos Excel."""
     root = tk.Tk()
     root.withdraw()
     root.attributes("-topmost", True)
@@ -92,38 +91,8 @@ class DashboardView(View):
 
         return obtener_hojas_cacheadas(ruta_archivo, _leer_hojas)
 
-    def _handle_seleccionar_archivo_galeria(self, request):
-        """Cambia instantáneamente entre los archivos subidos usando la RAM."""
-        ruta_elegida = request.POST.get("ruta_elegida", "")
-        galeria = request.session.get("archivos_vinculados", [])
-
-        for item in galeria:
-            if item["ruta"] == ruta_elegida:
-                if Path(ruta_elegida).is_file():
-                    sheets = self._obtener_hojas_excel(ruta_elegida)
-                    item["sheet_names"] = sheets
-                    if item["hoja_seleccionada"] not in sheets:
-                        item["hoja_seleccionada"], item["tipo"] = self._detectar_hoja_y_tipo(sheets)
-                    request.session["archivos_vinculados"] = galeria
-                    self._activar_item_galeria(request, item)
-                else:
-                    self._notificar(request, error=f"El archivo ya no se encuentra en: {ruta_elegida}")
-                break
-
-    def _handle_recargar_en_vivo(self, request, ruta_archivo):
-        """El botón 'Recargar datos' fuerza una lectura limpia desde el disco."""
-        if ruta_archivo and Path(ruta_archivo).is_file():
-            try:
-                invalidar_cache_archivo(ruta_archivo)
-                sheets = self._obtener_hojas_excel(ruta_archivo)
-                request.session["sheet_names"] = sheets
-                self._notificar(request, exito="Datos recargados en vivo desde el archivo original.")
-            except Exception as e:
-                self._notificar(request, error=f"No se pudo recargar el archivo: {e}")
-
-
     def _detectar_hoja_y_tipo(self, sheet_names):
-
+        """Determina la hoja principal por defecto y el tipo de icono para la tarjeta."""
         hojas_lower = {s.strip().lower(): s for s in sheet_names}
         for h_leg in HOJAS_CAUSAS_LEGALES:
             if h_leg in hojas_lower:
@@ -137,23 +106,16 @@ class DashboardView(View):
         hoja_def = sheet_names[0] if sheet_names else ""
         return hoja_def, "EXCEL"
 
-    def _handle_guardar_querella_sisgen(self, request, ruta_archivo, hoja_seleccionada, es_nuevo=False):
-        fila_num = None if es_nuevo else int(request.POST.get("fila_excel"))
-        try:
-            fila_res = guardar_fila_querellas_sisgen(
-                ruta_archivo, hoja_seleccionada, fila_num, request.POST, es_nuevo=es_nuevo
-            )
-            invalidar_cache_archivo(ruta_archivo)
-            accion_txt = "creado" if es_nuevo else "actualizado"
-            self._notificar(request, exito=f"Registro SISGEN {accion_txt} y guardado en vivo en la fila #{fila_res}.")
-        except PermissionError:
-            nombre = Path(ruta_archivo).name
-            self._notificar(request, error=f"No se pudo guardar porque '{nombre}' está abierto en Excel.")
-        except Exception as e:
-            logger.exception("Error guardando en QUERELLAS VS SISGEN")
-            self._notificar(request, error=f"Error al guardar registro SISGEN: {e}")
+    def _activar_item_galeria(self, request, item):
+        request.session.update({
+            "ruta_archivo": item["ruta"],
+            "nombre_archivo": item["nombre"],
+            "sheet_names": item["sheet_names"],
+            "hoja_seleccionada": item["hoja_seleccionada"],
+        })
 
     def _registrar_en_galeria(self, request, rutas_nuevas):
+        """Agrega uno o varios archivos a la galería en sesión y activa el último seleccionado."""
         galeria = request.session.get("archivos_vinculados", [])
         mapa_galeria = {item["ruta"]: item for item in galeria if Path(item["ruta"]).is_file()}
 
@@ -198,14 +160,6 @@ class DashboardView(View):
         if errores:
             self._notificar(request, error=" | ".join(errores))
 
-    def _activar_item_galeria(self, request, item):
-        request.session.update({
-            "ruta_archivo": item["ruta"],
-            "nombre_archivo": item["nombre"],
-            "sheet_names": item["sheet_names"],
-            "hoja_seleccionada": item["hoja_seleccionada"],
-        })
-
     def _handle_vincular_archivo(self, request, explorar=False):
         ruta_actual = request.session.get("ruta_archivo")
         if explorar:
@@ -224,6 +178,7 @@ class DashboardView(View):
         self._registrar_en_galeria(request, rutas)
 
     def _handle_seleccionar_archivo_galeria(self, request):
+        """Cambia instantáneamente entre los archivos subidos usando la RAM."""
         ruta_elegida = request.POST.get("ruta_elegida", "")
         galeria = request.session.get("archivos_vinculados", [])
 
@@ -255,7 +210,16 @@ class DashboardView(View):
                 for k in ("ruta_archivo", "nombre_archivo", "sheet_names", "hoja_seleccionada"):
                     request.session.pop(k, None)
 
-
+    def _handle_recargar_en_vivo(self, request, ruta_archivo):
+        """El botón 'Recargar datos' fuerza una lectura limpia desde el disco."""
+        if ruta_archivo and Path(ruta_archivo).is_file():
+            try:
+                invalidar_cache_archivo(ruta_archivo)
+                sheets = self._obtener_hojas_excel(ruta_archivo)
+                request.session["sheet_names"] = sheets
+                self._notificar(request, exito="Datos recargados en vivo desde el archivo original.")
+            except Exception as e:
+                self._notificar(request, error=f"No se pudo recargar el archivo: {e}")
 
     def _handle_cambiar_hoja(self, request):
         nueva_hoja = request.POST.get("hoja_seleccionada", "")
@@ -312,6 +276,7 @@ class DashboardView(View):
             fila_res = guardar_fila_causas_legales(
                 ruta_archivo, hoja_seleccionada, fila_num, request.POST, es_nuevo=es_nuevo
             )
+            invalidar_cache_archivo(ruta_archivo)
             accion_txt = "creada" if es_nuevo else "actualizada"
             self._notificar(request, exito=f"Causa legal {accion_txt} y guardada en vivo en la fila #{fila_res}.")
         except PermissionError:
@@ -320,6 +285,22 @@ class DashboardView(View):
         except Exception as e:
             logger.exception("Error guardando causa legal")
             self._notificar(request, error=f"Error al guardar la causa legal: {e}")
+
+    def _handle_guardar_querella_sisgen(self, request, ruta_archivo, hoja_seleccionada, es_nuevo=False):
+        fila_num = None if es_nuevo else int(request.POST.get("fila_excel"))
+        try:
+            fila_res = guardar_fila_querellas_sisgen(
+                ruta_archivo, hoja_seleccionada, fila_num, request.POST, es_nuevo=es_nuevo
+            )
+            invalidar_cache_archivo(ruta_archivo)
+            accion_txt = "creado" if es_nuevo else "actualizado"
+            self._notificar(request, exito=f"Registro SISGEN {accion_txt} y guardado en vivo en la fila #{fila_res}.")
+        except PermissionError:
+            nombre = Path(ruta_archivo).name
+            self._notificar(request, error=f"No se pudo guardar porque '{nombre}' está abierto en Excel.")
+        except Exception as e:
+            logger.exception("Error guardando en QUERELLAS VS SISGEN")
+            self._notificar(request, error=f"Error al guardar registro SISGEN: {e}")
 
     def post(self, request):
         """Procesa cualquier acción de escritura en vivo y redirige con PRG (Post/Redirect/Get)."""
@@ -355,6 +336,7 @@ class DashboardView(View):
             elif accion == "registrar_informe_estudio":
                 try:
                     f_inf = registrar_informe_recibido(ruta_archivo, request.POST)
+                    invalidar_cache_archivo(ruta_archivo)
                     self._notificar(request, exito=f"Recepción registrada en vivo (Fila #{f_inf} de 'Informes recibidos').")
                 except PermissionError:
                     self._notificar(request, error="No se pudo guardar porque el archivo está abierto en Excel.")
@@ -363,17 +345,17 @@ class DashboardView(View):
             elif accion == "guardar_reporte_bimestral":
                 try:
                     f_rep = guardar_reporte_bimestral_estudio(ruta_archivo, request.POST)
+                    invalidar_cache_archivo(ruta_archivo)
                     self._notificar(request, exito=f"Reporte bimestral actualizado en vivo (Fila #{f_rep} de 'Reportes estudios').")
                 except PermissionError:
                     self._notificar(request, error="No se pudo guardar porque el archivo está abierto en Excel.")
                 except Exception as e:
                     self._notificar(request, error=f"Error al guardar reporte bimestral: {e}")
-            
-            # --- CONEXIÓN DE LA NUEVA ACCIÓN DE AGENDA ---
             elif accion == "registrar_audiencia_agenda":
                 try:
                     f_aud = registrar_nueva_audiencia(ruta_archivo, request.POST)
-                    self._notificar(request, exito=f"Audiencia agendada correctamente en la hoja 'Próximas Audiencias'.")
+                    invalidar_cache_archivo(ruta_archivo)
+                    self._notificar(request, exito=f"Audiencia agendada correctamente en la hoja 'Próximas Audiencias' (Fila #{f_aud}).")
                 except PermissionError:
                     self._notificar(request, error="No se pudo guardar porque el archivo está abierto en Excel.")
                 except Exception as e:
@@ -443,6 +425,7 @@ class DashboardView(View):
             except Exception as e:
                 logger.exception("Error procesando la hoja %s", hoja_seleccionada)
                 contexto["error"] = f"Error al procesar la hoja '{hoja_seleccionada}': {e}"
+
         return render(request, self.template_name, contexto)
 
 

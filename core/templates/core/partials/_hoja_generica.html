@@ -1,0 +1,27 @@
+<!-- core/templates/core/partials/_hoja_generica.html -->
+<div class="card shadow-sm">
+    <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center py-2">
+        <span class="fw-bold">Vista Previa: {{ hoja_seleccionada }}</span>
+        <span class="badge bg-primary">{{ total_filas }} filas totales (mostrando máx. 100)</span>
+    </div>
+    <div class="table-responsive contenedor-tabla-consolidado">
+        <table class="table table-sm table-hover table-bordered align-middle mb-0 small">
+            <thead class="table-dark sticky-top">
+                <tr>
+                    {% for col in columnas %}
+                        <th>{{ col }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for fila in filas %}
+                    <tr>
+                        {% for celda in fila %}
+                            <td>{{ celda }}</td>
+                        {% endfor %}
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
